@@ -56,52 +56,79 @@ export function AdminPanel({
       <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
         <h2 className="text-xl font-bold text-white">create next run</h2>
 
-        <form action={submitCreateRun} className="mt-4 space-y-3">
-          <input
-            name="date"
-            type="date"
-            required
-            className="w-full rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none"
-          />
+        <form action={submitCreateRun} className="mt-4 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-300">date</span>
+            <input
+              name="date"
+              type="date"
+              required
+              className="w-full min-w-0 rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none [color-scheme:dark]"
+            />
+          </label>
 
           <div className="grid grid-cols-2 gap-3">
-            <input
-              name="start_time"
-              type="time"
-              required
-              className="rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none"
-            />
-            <input
-              name="end_time"
-              type="time"
-              required
-              className="rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none"
-            />
+            <label className="block min-w-0">
+              <span className="mb-2 block text-sm text-slate-300">
+                start time
+              </span>
+              <input
+                name="start_time"
+                type="time"
+                required
+                className="w-full min-w-0 rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none [color-scheme:dark]"
+              />
+            </label>
+
+            <label className="block min-w-0">
+              <span className="mb-2 block text-sm text-slate-300">
+                end time
+              </span>
+              <input
+                name="end_time"
+                type="time"
+                required
+                className="w-full min-w-0 rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none [color-scheme:dark]"
+              />
+            </label>
           </div>
 
-          <input
-            name="gym_name"
-            placeholder="gym name"
-            required
-            className="w-full rounded-2xl bg-slate-950/40 px-4 py-3 text-white placeholder:text-slate-500 outline-none"
-          />
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-300">gym name</span>
+            <input
+              name="gym_name"
+              placeholder="e.g. maddison gym"
+              required
+              className="w-full min-w-0 rounded-2xl bg-slate-950/40 px-4 py-3 text-white placeholder:text-slate-500 outline-none"
+            />
+          </label>
 
-          <input
-            name="location_url"
-            placeholder="google maps / apple maps url"
-            required
-            className="w-full rounded-2xl bg-slate-950/40 px-4 py-3 text-white placeholder:text-slate-500 outline-none"
-          />
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-300">
+              location link
+            </span>
+            <input
+              name="location_url"
+              placeholder="paste google maps or apple maps link"
+              required
+              className="w-full min-w-0 rounded-2xl bg-slate-950/40 px-4 py-3 text-white placeholder:text-slate-500 outline-none"
+            />
+          </label>
 
-          <input
-            name="total_rent"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="total rent"
-            required
-            className="w-full rounded-2xl bg-slate-950/40 px-4 py-3 text-white placeholder:text-slate-500 outline-none"
-          />
+          <label className="block">
+            <span className="mb-2 block text-sm text-slate-300">
+              total rent ($)
+            </span>
+            <input
+              name="total_rent"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g. 120"
+              required
+              className="w-full min-w-0 rounded-2xl bg-slate-950/40 px-4 py-3 text-white placeholder:text-slate-500 outline-none"
+            />
+          </label>
 
           <button className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-950">
             create run
