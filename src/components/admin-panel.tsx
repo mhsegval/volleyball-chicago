@@ -1,4 +1,5 @@
 import {
+  approvePaymentRequest,
   completeActiveRun,
   createRun,
   removeSignup,
@@ -8,12 +9,15 @@ import {
   updateUserRole,
 } from "@/lib/actions";
 import { DeleteRunButton } from "@/components/delete-run-button";
-import type { Run, Signup, UserProfile } from "@/lib/types";
+import { RejectPaymentButton } from "@/components/reject-payment-button";
+import type { Run, Signup, UserProfile, PaymentRequest } from "@/lib/types";
+import { Check } from "lucide-react";
 
 type AdminPanelProps = {
   activeRun: Run | null;
   signups: (Signup & { users: UserProfile })[];
   users: UserProfile[];
+  pendingPayments: (PaymentRequest & { users?: UserProfile })[];
   searchQuery: string;
 };
 
@@ -21,6 +25,7 @@ export function AdminPanel({
   activeRun,
   signups,
   users,
+  pendingPayments,
   searchQuery,
 }: AdminPanelProps) {
   async function submitCreateRun(formData: FormData) {
@@ -58,8 +63,70 @@ export function AdminPanel({
     await updateUserRole(formData);
   }
 
+  async function submitApprovePayment(formData: FormData) {
+    "use server";
+    await approvePaymentRequest(formData);
+  }
+
   return (
     <div className="space-y-6">
+      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-bold text-slate-900">payment review</h2>
+          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
+            {pendingPayments.length} pending
+          </span>
+        </div>
+
+        <p className="mt-2 text-sm text-slate-500">
+          These users already received the balance update and are waiting for
+          review.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          {pendingPayments.length === 0 ? (
+            <p className="text-sm text-slate-500">no pending payments.</p>
+          ) : (
+            pendingPayments.map((payment) => (
+              <div
+                key={payment.id}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-slate-900">
+                    {payment.users?.name || "user"}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {payment.users?.email || "no email"}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    ${Number(payment.amount).toFixed(2)} via {payment.method}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <form action={submitApprovePayment}>
+                    <input type="hidden" name="request_id" value={payment.id} />
+                    <button
+                      className="rounded-xl bg-emerald-50 p-3 text-emerald-700"
+                      title="confirm payment"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                  </form>
+
+                  <RejectPaymentButton
+                    requestId={payment.id}
+                    amount={Number(payment.amount)}
+                    userName={payment.users?.name}
+                  />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
       {!activeRun ? (
         <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900">create next run</h2>

@@ -4,6 +4,148 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
+export async function createPaymentRequest(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const amount = Number(formData.get('amount') || 0);
+  const method = String(formData.get('method') || '');
+
+  if (!amount || amount <= 0) {
+    return { error: 'invalid amount' };
+  }
+
+  if (method !== 'zelle' && method !== 'venmo') {
+    return { error: 'invalid payment method' };
+  }
+
+  const { error: balanceError } = await supabase.rpc('noop');
+  void balanceError;
+
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select('balance')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return { error: 'could not load user balance' };
+  }
+
+  const newBalance = Number(profile.balance) + amount;
+
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({ balance: newBalance })
+    .eq('id', user.id);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  const { error: requestError } = await supabase.from('payment_requests').insert({
+    user_id: user.id,
+    amount,
+    method,
+    status: 'pending',
+  });
+
+  if (requestError) {
+    await supabase
+      .from('users')
+      .update({ balance: profile.balance })
+      .eq('id', user.id);
+
+    return { error: requestError.message };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/profile');
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+export async function approvePaymentRequest(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+
+  const requestId = String(formData.get('request_id') || '');
+
+  const { error } = await supabase
+    .from('payment_requests')
+    .update({
+      status: 'approved',
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user.id,
+    })
+    .eq('id', requestId)
+    .eq('status', 'pending');
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/admin');
+  revalidatePath('/profile');
+  revalidatePath('/');
+  return { success: true };
+}
+
+export async function rejectPaymentRequest(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+
+  const requestId = String(formData.get('request_id') || '');
+
+  const { data: request, error: requestError } = await supabase
+    .from('payment_requests')
+    .select('*')
+    .eq('id', requestId)
+    .eq('status', 'pending')
+    .single();
+
+  if (requestError || !request) {
+    return { error: 'payment request not found' };
+  }
+
+  const { data: targetUser, error: userError } = await supabase
+    .from('users')
+    .select('balance')
+    .eq('id', request.user_id)
+    .single();
+
+  if (userError || !targetUser) {
+    return { error: 'user not found' };
+  }
+
+  const reversedBalance = Number(targetUser.balance) - Number(request.amount);
+
+  const { error: balanceError } = await supabase
+    .from('users')
+    .update({ balance: reversedBalance })
+    .eq('id', request.user_id);
+
+  if (balanceError) {
+    return { error: balanceError.message };
+  }
+
+  const { error: updateError } = await supabase
+    .from('payment_requests')
+    .update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user.id,
+    })
+    .eq('id', requestId)
+    .eq('status', 'pending');
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  revalidatePath('/admin');
+  revalidatePath('/profile');
+  revalidatePath('/');
+  return { success: true };
+}
+
 async function requireUser() {
   const supabase = await createClient();
   const {

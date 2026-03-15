@@ -7,7 +7,6 @@ import { sendOtp, verifyOtp } from "@/lib/actions";
 export function AuthCard() {
   const [step, setStep] = useState<"request" | "verify">("request");
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -20,7 +19,6 @@ export function AuthCard() {
 
             const fd = new FormData();
             fd.set("email", email);
-            fd.set("name", name);
 
             startTransition(async () => {
               const res = await sendOtp(fd);
@@ -47,22 +45,10 @@ export function AuthCard() {
               Enter your email to receive a one-time code.
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              Name is only required for new users. If you already have an
-              account, we will ignore it.
+              New users will add their name and profile picture on the next
+              page.
             </p>
           </div>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              name <span className="text-slate-400">(new users only)</span>
-            </span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="your name"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-            />
-          </label>
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">

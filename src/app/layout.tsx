@@ -16,6 +16,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <main className="mx-auto min-h-screen w-full max-w-md">{children}</main>
+        <footer className="pb-32 text-center text-xs text-slate-400">
+          site maintained by Mohammed Segval
+        </footer>
       </body>
     </html>
   );

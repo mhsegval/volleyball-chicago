@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { updateOwnProfile } from "@/lib/actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { BottomBar } from "@/components/bottom-bar";
-import type { UserProfile } from "@/lib/types";
+import { PaymentModal } from "@/components/payment-modal";
+import type { UserProfile, PaymentRequest } from "@/lib/types";
+import { ProfilePaymentSection } from "@/components/profile-payment-section";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +20,15 @@ export default async function ProfilePage() {
     redirect("/auth");
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", user.id)
-    .single<UserProfile>();
+  const [{ data: profile }, { data: paymentRequests }] = await Promise.all([
+    supabase.from("users").select("*").eq("id", user.id).single<UserProfile>(),
+    supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (!profile) {
     redirect("/auth");
@@ -34,6 +40,8 @@ export default async function ProfilePage() {
   }
 
   const isNegativeBalance = Number(profile.balance) < 0;
+  const isLowBalance = Number(profile.balance) <= 10;
+  const hasPendingPayment = (paymentRequests ?? []).length > 0;
 
   return (
     <div className="space-y-5 px-4 py-5 pb-32">
@@ -43,10 +51,14 @@ export default async function ProfilePage() {
         </p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">your account</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Manage your profile, check your balance, and keep your details up to
-          date.
+          Manage your profile, check your balance, and top up when needed.
         </p>
       </div>
+
+      <ProfilePaymentSection
+        lowBalance={isLowBalance}
+        hasPendingPayment={hasPendingPayment}
+      />
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-4">
@@ -93,7 +105,7 @@ export default async function ProfilePage() {
             </p>
             <p className="mt-1 text-xs text-slate-500">
               {isNegativeBalance
-                ? "please zelle the amount and ask an admin to update it"
+                ? "please pay and wait for admin review"
                 : "available account balance"}
             </p>
           </div>
@@ -115,7 +127,7 @@ export default async function ProfilePage() {
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-xl font-bold text-slate-900">edit profile</h2>
         <p className="mt-2 text-sm text-slate-500">
-          Update your display name or add a new profile picture anytime.
+          Update your display name or profile picture anytime.
         </p>
 
         <form action={submitProfile} className="mt-5 space-y-4">
