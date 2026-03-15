@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { updateOwnProfile } from "@/lib/actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { BottomBar } from "@/components/bottom-bar";
+import type { UserProfile } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -19,7 +22,7 @@ export default async function ProfilePage() {
     .from("users")
     .select("*")
     .eq("id", user.id)
-    .single();
+    .single<UserProfile>();
 
   if (!profile) {
     redirect("/auth");
@@ -30,84 +33,122 @@ export default async function ProfilePage() {
     await updateOwnProfile(formData);
   }
 
+  const isNegativeBalance = Number(profile.balance) < 0;
+
   return (
-    <div className="space-y-5 px-4 py-5 pb-28">
+    <div className="space-y-5 px-4 py-5 pb-32">
       <div>
-        <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-600">
           profile
         </p>
-        <h1 className="mt-2 text-3xl font-bold">your account</h1>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">your account</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Manage your profile, check your balance, and keep your details up to
+          date.
+        </p>
       </div>
 
-      <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-4">
           <UserAvatar
             name={profile.name}
             avatarUrl={profile.avatar_url}
-            size={72}
+            size={76}
           />
+
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-bold text-white">
+            <h2 className="truncate text-xl font-bold text-slate-900">
               {profile.name || "unnamed user"}
             </h2>
-            <p className="truncate text-sm text-slate-400">
+            <p className="truncate text-sm text-slate-500">
               {profile.email || "no email"}
             </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+                {profile.role}
+              </span>
+              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
+                {profile.streak} week streak
+              </span>
+            </div>
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-3xl bg-emerald-500/15 p-4">
-            <p className="text-xs uppercase tracking-wider text-emerald-300">
+          <div
+            className={`rounded-3xl p-4 ${
+              isNegativeBalance ? "bg-red-50" : "bg-emerald-50"
+            }`}
+          >
+            <p
+              className={`text-xs uppercase tracking-wider ${
+                isNegativeBalance ? "text-red-700" : "text-emerald-700"
+              }`}
+            >
               balance
             </p>
-            <p className="mt-2 text-2xl font-bold text-white">
+            <p className="mt-2 text-2xl font-bold text-slate-900">
               ${Number(profile.balance).toFixed(2)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {isNegativeBalance
+                ? "please zelle the amount and ask an admin to update it"
+                : "available account balance"}
             </p>
           </div>
 
-          <div className="rounded-3xl bg-orange-500/15 p-4">
-            <p className="text-xs uppercase tracking-wider text-orange-300">
+          <div className="rounded-3xl bg-orange-50 p-4">
+            <p className="text-xs uppercase tracking-wider text-orange-700">
               streak
             </p>
-            <p className="mt-2 text-2xl font-bold text-white">
-              {profile.streak} weeks
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {profile.streak}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              consecutive attended weeks
             </p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-        <h2 className="text-xl font-bold text-white">edit profile</h2>
+      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">edit profile</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Update your display name or add a new profile picture anytime.
+        </p>
 
-        <form action={submitProfile} className="mt-4 space-y-4">
+        <form action={submitProfile} className="mt-5 space-y-4">
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">name</span>
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              name
+            </span>
             <input
               name="name"
               defaultValue={profile.name ?? ""}
               required
-              className="w-full rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
             />
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">
-              change profile picture
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              profile picture
             </span>
             <input
               name="avatar"
               type="file"
               accept="image/*"
-              className="w-full rounded-2xl bg-slate-950/40 px-4 py-3 text-white outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-sky-400 file:px-3 file:py-2 file:text-slate-950"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:text-sky-700"
             />
           </label>
 
-          <button className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-950">
+          <button className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white">
             save profile
           </button>
         </form>
       </section>
+
       <BottomBar isAdmin={profile.role === "admin"} />
     </div>
   );

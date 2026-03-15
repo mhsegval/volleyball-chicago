@@ -8,6 +8,7 @@ import { isNewUser } from "@/lib/format";
 import type { Run, Signup, UserProfile } from "@/lib/types";
 
 type SignupWithUser = Signup & { users: UserProfile };
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -63,7 +64,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="space-y-5 px-4 py-5">
+    <div className="space-y-5 px-4 py-5 pb-32">
       <NextRunBanner run={activeRun} estimatedRent={estimatedRent} />
 
       {activeRun && (

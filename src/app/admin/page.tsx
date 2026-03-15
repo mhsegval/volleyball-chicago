@@ -6,6 +6,8 @@ import type { Run, Signup, UserProfile } from "@/lib/types";
 
 type SignupWithUser = Signup & { users: UserProfile };
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage({
   searchParams,
 }: {
@@ -64,7 +66,7 @@ export default async function AdminPage({
   }
 
   return (
-    <div className="space-y-5 px-4 py-5 pb-28">
+    <div className="space-y-5 px-4 py-5 pb-32">
       <div>
         <p className="text-sm uppercase tracking-[0.25em] text-sky-300">
           admin

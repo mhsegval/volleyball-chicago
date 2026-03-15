@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { completeProfile } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage() {
   const supabase = await createClient();
 
