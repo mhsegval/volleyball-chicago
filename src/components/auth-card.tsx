@@ -59,7 +59,7 @@ export function AuthCard() {
               <input
                 type="email"
                 required
-                value={email}
+                value={email ?? ""}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-transparent text-slate-900 outline-none"
               />
@@ -83,7 +83,7 @@ export function AuthCard() {
             const form = new FormData(e.currentTarget);
             const fd = new FormData();
             fd.set("email", email);
-            fd.set("token", String(form.get("token") || ""));
+            fd.set("token", String(form.get("otp") || ""));
 
             startTransition(async () => {
               const res = await verifyOtp(fd);
@@ -114,8 +114,13 @@ export function AuthCard() {
             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
               <Shield className="h-4 w-4 text-slate-400" />
               <input
-                name="token"
+                name="otp"
+                type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 className="w-full bg-transparent text-lg tracking-[0.3em] text-slate-900 outline-none"
               />
