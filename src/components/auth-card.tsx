@@ -12,7 +12,7 @@ export function AuthCard() {
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="w-full rounded-[32px] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur">
+    <div className="w-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
       {step === "request" ? (
         <form
           onSubmit={(e) => {
@@ -37,54 +37,57 @@ export function AuthCard() {
           className="space-y-4"
         >
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-600">
               volleyball chicago
             </p>
-            <h1 className="mt-3 text-3xl font-bold">
+            <h1 className="mt-3 text-3xl font-bold text-slate-900">
               single sign on / sign up
             </h1>
-            <p className="mt-2 text-sm text-slate-300">
-              enter your email to receive a one-time code.
+            <p className="mt-2 text-sm text-slate-500">
+              Enter your email to receive a one-time code.
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              name is only required for new users.
+              Name is only required for new users. If you already have an
+              account, we will ignore it.
             </p>
           </div>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">
-              name <span className="text-slate-500">(new users only)</span>
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              name <span className="text-slate-400">(new users only)</span>
             </span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="your name"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-white outline-none placeholder:text-slate-500"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
             />
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">email</span>
-            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              email
+            </span>
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
               <Mail className="h-4 w-4 text-slate-400" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent text-white outline-none"
+                className="w-full bg-transparent text-slate-900 outline-none"
               />
             </div>
           </label>
 
           <button
             disabled={pending}
-            className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-950 disabled:opacity-60"
+            className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
           >
             {pending ? "sending..." : "send code"}
           </button>
 
-          {message ? <p className="text-sm text-sky-200">{message}</p> : null}
+          {message ? <p className="text-sm text-sky-600">{message}</p> : null}
         </form>
       ) : (
         <form
@@ -107,33 +110,35 @@ export function AuthCard() {
           className="space-y-4"
         >
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-sky-300">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-600">
               verify
             </p>
-            <h2 className="mt-3 text-2xl font-bold">enter your code</h2>
-            <p className="mt-2 text-sm text-slate-300">
-              check your email and enter the one-time code.
+            <h2 className="mt-3 text-2xl font-bold text-slate-900">
+              enter your code
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Check your email and enter the one-time code.
             </p>
           </div>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
               one-time code
             </span>
-            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
               <Shield className="h-4 w-4 text-slate-400" />
               <input
                 name="token"
                 inputMode="numeric"
                 required
-                className="w-full bg-transparent text-lg tracking-[0.3em] text-white outline-none"
+                className="w-full bg-transparent text-lg tracking-[0.3em] text-slate-900 outline-none"
               />
             </div>
           </label>
 
           <button
             disabled={pending}
-            className="w-full rounded-2xl bg-sky-400 px-4 py-3 font-semibold text-slate-950 disabled:opacity-60"
+            className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
           >
             {pending ? "verifying..." : "verify code"}
           </button>
@@ -141,13 +146,13 @@ export function AuthCard() {
           <button
             type="button"
             onClick={() => setStep("request")}
-            className="w-full rounded-2xl bg-white/10 px-4 py-3 text-white"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700"
           >
             go back
           </button>
 
           {message ? (
-            <p className="text-sm text-orange-200">{message}</p>
+            <p className="text-sm text-orange-600">{message}</p>
           ) : null}
         </form>
       )}

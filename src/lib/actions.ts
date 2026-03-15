@@ -56,6 +56,30 @@ export async function sendOtp(formData: FormData) {
   return { success: 'otp sent' };
 }
 
+export async function updateRunDetails(formData: FormData) {
+  const { supabase } = await requireAdmin();
+
+  const runId = String(formData.get('run_id') || '');
+  const payload = {
+    date: String(formData.get('date') || ''),
+    start_time: String(formData.get('start_time') || ''),
+    end_time: String(formData.get('end_time') || ''),
+    gym_name: String(formData.get('gym_name') || '').trim(),
+    location_url: String(formData.get('location_url') || '').trim(),
+    total_rent: Number(formData.get('total_rent') || 0),
+  };
+
+  const { error } = await supabase.from('runs').update(payload).eq('id', runId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/admin');
+  return { success: true };
+}
+
 export async function verifyOtp(formData: FormData) {
   const email = String(formData.get('email') || '')
     .trim()

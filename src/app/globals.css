@@ -1,17 +1,19 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #07111f;
-  --card: #0f1b2d;
-  --muted: #8ba2c7;
-  --text: #ecf3ff;
-  --accent: #22c55e;
-  --accent-2: #38bdf8;
+  --background: #f8fafc;
+  --card: #ffffff;
+  --muted: #64748b;
+  --text: #0f172a;
+  --border: #e2e8f0;
+  --accent: #16a34a;
+  --accent-2: #0ea5e9;
   --accent-3: #f97316;
 }
 
-html, body {
-  background: radial-gradient(circle at top, #132444 0%, #07111f 45%, #030712 100%);
+html,
+body {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   color: var(--text);
   min-height: 100%;
 }
@@ -20,6 +22,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
   font: inherit;
+}
+
+::placeholder {
+  color: #94a3b8;
 }
