@@ -1,5 +1,9 @@
-export type AppRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin';
+
 export type RunStatus = 'active' | 'completed';
+
+export type PaymentMethod = 'zelle' | 'venmo';
+export type PaymentStatus = 'pending' | 'approved' | 'rejected';
 
 export type UserProfile = {
   id: string;
@@ -8,7 +12,8 @@ export type UserProfile = {
   avatar_url: string | null;
   balance: number;
   streak: number;
-  role: AppRole;
+  role: UserRole;
+  created_at?: string;
 };
 
 export type Run = {
@@ -20,7 +25,7 @@ export type Run = {
   location_url: string;
   total_rent: number;
   status: RunStatus;
-  balances_applied: boolean;
+  created_at?: string;
 };
 
 export type Signup = {
@@ -28,5 +33,16 @@ export type Signup = {
   run_id: string;
   user_id: string;
   created_at: string;
+};
+
+export type PaymentRequest = {
+  id: string;
+  user_id: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
   users?: UserProfile;
 };
