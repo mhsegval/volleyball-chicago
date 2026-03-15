@@ -7,6 +7,7 @@ import {
   updateUserName,
   updateUserRole,
 } from "@/lib/actions";
+import { DeleteRunButton } from "@/components/delete-run-button";
 import type { Run, Signup, UserProfile } from "@/lib/types";
 
 type AdminPanelProps = {
@@ -59,100 +60,11 @@ export function AdminPanel({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900">create next run</h2>
-
-        <form action={submitCreateRun} className="mt-4 space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              date
-            </span>
-            <input
-              name="date"
-              type="date"
-              required
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
-            />
-          </label>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                start time
-              </span>
-              <input
-                name="start_time"
-                type="time"
-                required
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                end time
-              </span>
-              <input
-                name="end_time"
-                type="time"
-                required
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
-              />
-            </label>
-          </div>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              gym name
-            </span>
-            <input
-              name="gym_name"
-              placeholder="e.g. maddison gym"
-              required
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              location link
-            </span>
-            <input
-              name="location_url"
-              placeholder="paste google maps or apple maps link"
-              required
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              total rent ($)
-            </span>
-            <input
-              name="total_rent"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="e.g. 120"
-              required
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-            />
-          </label>
-
-          <button className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white">
-            create run
-          </button>
-        </form>
-      </section>
-
-      {activeRun && (
+      {!activeRun ? (
         <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-bold text-slate-900">edit active run</h2>
+          <h2 className="text-xl font-bold text-slate-900">create next run</h2>
 
-          <form action={submitUpdateRun} className="mt-4 space-y-4">
-            <input type="hidden" name="run_id" value={activeRun.id} />
-
+          <form action={submitCreateRun} className="mt-4 space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
                 date
@@ -160,7 +72,6 @@ export function AdminPanel({
               <input
                 name="date"
                 type="date"
-                defaultValue={activeRun.date}
                 required
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
               />
@@ -174,7 +85,6 @@ export function AdminPanel({
                 <input
                   name="start_time"
                   type="time"
-                  defaultValue={activeRun.start_time}
                   required
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
                 />
@@ -187,7 +97,6 @@ export function AdminPanel({
                 <input
                   name="end_time"
                   type="time"
-                  defaultValue={activeRun.end_time}
                   required
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
                 />
@@ -200,7 +109,7 @@ export function AdminPanel({
               </span>
               <input
                 name="gym_name"
-                defaultValue={activeRun.gym_name}
+                placeholder="e.g. maddison gym"
                 required
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
               />
@@ -212,7 +121,7 @@ export function AdminPanel({
               </span>
               <input
                 name="location_url"
-                defaultValue={activeRun.location_url}
+                placeholder="paste google maps or apple maps link"
                 required
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
               />
@@ -227,35 +136,148 @@ export function AdminPanel({
                 type="number"
                 step="0.01"
                 min="0"
-                defaultValue={activeRun.total_rent}
+                placeholder="e.g. 120"
                 required
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
               />
             </label>
 
-            <button className="w-full rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white">
-              update active run
+            <button className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white">
+              create run
             </button>
           </form>
         </section>
+      ) : (
+        <>
+          <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-bold text-slate-900">active run</h2>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                active
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm text-slate-500">
+              A run already exists. You can edit or delete the current run
+              before creating another one.
+            </p>
+
+            <form action={submitUpdateRun} className="mt-4 space-y-4">
+              <input type="hidden" name="run_id" value={activeRun.id} />
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  date
+                </span>
+                <input
+                  name="date"
+                  type="date"
+                  defaultValue={activeRun.date}
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    start time
+                  </span>
+                  <input
+                    name="start_time"
+                    type="time"
+                    defaultValue={activeRun.start_time}
+                    required
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    end time
+                  </span>
+                  <input
+                    name="end_time"
+                    type="time"
+                    defaultValue={activeRun.end_time}
+                    required
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none [color-scheme:light]"
+                  />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  gym name
+                </span>
+                <input
+                  name="gym_name"
+                  defaultValue={activeRun.gym_name}
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  location link
+                </span>
+                <input
+                  name="location_url"
+                  defaultValue={activeRun.location_url}
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  total rent ($)
+                </span>
+                <input
+                  name="total_rent"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={activeRun.total_rent}
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                />
+              </label>
+
+              <button className="w-full rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white">
+                update active run
+              </button>
+            </form>
+
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+              <p className="text-sm text-red-700">
+                Deleting this run will remove all signed up players. They will
+                need to register again.
+              </p>
+              <div className="mt-3">
+                <DeleteRunButton />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900">
+              manual override
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Mark the active run complete and deduct the final rent from
+              signed-up players.
+            </p>
+
+            <form action={submitCompleteActiveRun} className="mt-4">
+              <button className="w-full rounded-2xl bg-orange-500 px-4 py-3 font-semibold text-white">
+                complete active run
+              </button>
+            </form>
+          </section>
+        </>
       )}
-
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900">manual override</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Mark the active run complete and deduct the final rent from signed-up
-          players.
-        </p>
-
-        <form action={submitCompleteActiveRun} className="mt-4">
-          <button
-            disabled={!activeRun}
-            className="w-full rounded-2xl bg-orange-500 px-4 py-3 font-semibold text-white disabled:opacity-50"
-          >
-            complete active run
-          </button>
-        </form>
-      </section>
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-xl font-bold text-slate-900">current players</h2>

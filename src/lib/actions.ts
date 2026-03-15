@@ -80,6 +80,34 @@ export async function updateRunDetails(formData: FormData) {
   return { success: true };
 }
 
+export async function deleteActiveRun() {
+  const { supabase } = await requireAdmin();
+
+  const { data: run, error: runError } = await supabase
+    .from('runs')
+    .select('id')
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (runError) {
+    return { error: runError.message };
+  }
+
+  if (!run) {
+    return { error: 'no active run found' };
+  }
+
+  const { error } = await supabase.from('runs').delete().eq('id', run.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/');
+  revalidatePath('/admin');
+  return { success: true };
+}
+
 export async function verifyOtp(formData: FormData) {
   const email = String(formData.get('email') || '')
     .trim()
