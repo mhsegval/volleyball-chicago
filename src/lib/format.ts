@@ -1,7 +1,20 @@
+import { format } from 'date-fns';
 import type { UserProfile } from '@/lib/types';
 
-export function isNewUser(profile: UserProfile) {
-  return !profile.name || profile.name.trim().length === 0;
+export function formatOrdinalDay(dateString: string) {
+  const date = new Date(dateString);
+  const day = date.getDate();
+
+  const suffix =
+    day % 10 === 1 && day !== 11
+      ? 'st'
+      : day % 10 === 2 && day !== 12
+      ? 'nd'
+      : day % 10 === 3 && day !== 13
+      ? 'rd'
+      : 'th';
+
+  return `${day}${suffix} ${format(date, 'MMMM yyyy').toLowerCase()}`;
 }
 
 export function ordinal(n: number) {
@@ -29,4 +42,8 @@ export function formatRunWindow(date: string, startTime: string, endTime: string
   }
 
   return `${day} ${month} ${year} time: ${formatTime(startTime)}-${formatTime(endTime)}`;
+}
+
+export function isNewUser(profile: UserProfile | null | undefined) {
+  return !profile?.name || profile.name.trim().length === 0;
 }
