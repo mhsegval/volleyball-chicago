@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export async function createPaymentRequest(formData: FormData) {
-  const { supabase, user } = await requireUser();
+  const { supabase } = await requireUser();
 
   const amount = Number(formData.get('amount') || 0);
   const method = String(formData.get('method') || '');
@@ -18,44 +18,13 @@ export async function createPaymentRequest(formData: FormData) {
     return { error: 'invalid payment method' };
   }
 
-  const { error: balanceError } = await supabase.rpc('noop');
-  void balanceError;
-
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select('balance')
-    .eq('id', user.id)
-    .single();
-
-  if (profileError || !profile) {
-    return { error: 'could not load user balance' };
-  }
-
-  const newBalance = Number(profile.balance) + amount;
-
-  const { error: updateError } = await supabase
-    .from('users')
-    .update({ balance: newBalance })
-    .eq('id', user.id);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
-
-  const { error: requestError } = await supabase.from('payment_requests').insert({
-    user_id: user.id,
-    amount,
-    method,
-    status: 'pending',
+  const { error } = await supabase.rpc('create_payment_request_and_credit', {
+    p_amount: amount,
+    p_method: method,
   });
 
-  if (requestError) {
-    await supabase
-      .from('users')
-      .update({ balance: profile.balance })
-      .eq('id', user.id);
-
-    return { error: requestError.message };
+  if (error) {
+    return { error: error.message };
   }
 
   revalidatePath('/');
