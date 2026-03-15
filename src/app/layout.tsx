@@ -4,7 +4,7 @@ import { IntroSplash } from "@/components/intro-splash";
 
 export const metadata: Metadata = {
   title: "Volleyball Chicago",
-  description: "Weekly Chicago volleyball run",
+  description: "Weekly Friday volleyball organizer",
 };
 
 export default function RootLayout({
@@ -15,10 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <IntroSplash />
-        <main className="mx-auto min-h-screen w-full max-w-md pb-24">
-          {children}
-        </main>
+        <main className="mx-auto min-h-screen w-full max-w-md">{children}</main>
       </body>
     </html>
   );
