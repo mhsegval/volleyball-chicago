@@ -7,12 +7,12 @@ export function SignOutButton({ compact = false }: { compact?: boolean }) {
       <button
         className={
           compact
-            ? "flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 px-3 py-3 text-sm text-white"
-            : "inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white"
+            ? "flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            : "inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm"
         }
       >
         <LogOut className="h-4 w-4" />
-        <span></span>
+        <span>sign out</span>
       </button>
     </form>
   );

@@ -80,7 +80,7 @@ export function PlayerAutocomplete({
   if (!isAdmin) {
     return (
       <section className="space-y-3">
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-4">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <UserAvatar
               name={currentUser.name}
@@ -88,8 +88,8 @@ export function PlayerAutocomplete({
               size={44}
             />
             <div className="flex-1">
-              <p className="font-medium text-white">{currentUser.name}</p>
-              <p className="text-sm text-slate-400">
+              <p className="font-medium text-slate-900">{currentUser.name}</p>
+              <p className="text-sm text-slate-500">
                 {isCurrentUserSignedUp
                   ? "you are registered for this run"
                   : "register yourself for this run"}
@@ -103,7 +103,7 @@ export function PlayerAutocomplete({
                 type="button"
                 disabled={pending}
                 onClick={handleRemoveSelf}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500/20 px-4 py-3 font-medium text-red-200 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 font-medium text-red-700 disabled:opacity-60"
               >
                 <UserMinus className="h-4 w-4" />
                 remove me
@@ -113,7 +113,7 @@ export function PlayerAutocomplete({
                 type="button"
                 disabled={pending}
                 onClick={() => handleAdd(currentUser.id)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-950 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
               >
                 <Plus className="h-4 w-4" />
                 register me
@@ -122,36 +122,30 @@ export function PlayerAutocomplete({
           </div>
         </div>
 
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
       </section>
     );
   }
 
   return (
     <section className="relative">
-      <div className="flex items-center gap-3 rounded-[28px] border border-white/10 bg-white/5 px-4 py-3">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-400 text-slate-950">
-          <Plus className="h-5 w-5" />
-        </div>
+      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          add player
+        </label>
 
-        <div className="flex-1">
-          <label className="mb-1 block text-xs uppercase tracking-widest text-slate-400">
-            add player
-          </label>
-
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="search by name"
-              className="w-full bg-transparent outline-none placeholder:text-slate-500"
-            />
-          </div>
+        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+          <Search className="h-4 w-4 text-slate-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="search by name"
+            className="w-full bg-transparent text-slate-900 outline-none"
+          />
         </div>
       </div>
 
-      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
 
       <AnimatePresence>
         {filtered.length > 0 && (
@@ -159,7 +153,7 @@ export function PlayerAutocomplete({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
-            className="absolute inset-x-0 z-30 mt-2 rounded-[24px] border border-white/10 bg-slate-950/95 p-2 shadow-2xl backdrop-blur"
+            className="absolute inset-x-0 z-30 mt-2 rounded-[24px] border border-slate-200 bg-white p-2 shadow-xl"
           >
             {filtered.map((user) => (
               <button
@@ -167,7 +161,7 @@ export function PlayerAutocomplete({
                 type="button"
                 disabled={pending}
                 onClick={() => handleAdd(user.id)}
-                className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left hover:bg-white/5 disabled:opacity-60"
+                className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-slate-50 disabled:opacity-60"
               >
                 <UserAvatar
                   name={user.name}
@@ -176,8 +170,10 @@ export function PlayerAutocomplete({
                 />
 
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-white">{user.name}</p>
-                  <p className="truncate text-xs text-slate-400">
+                  <p className="truncate font-medium text-slate-900">
+                    {user.name}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
                     {user.email}
                   </p>
                 </div>

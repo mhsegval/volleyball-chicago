@@ -23,7 +23,7 @@ export function Roster({
   return (
     <section className="space-y-4">
       {teams.length === 0 ? (
-        <div className="rounded-[28px] border border-dashed border-white/10 bg-white/5 p-5 text-sm text-slate-300">
+        <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500 shadow-sm">
           no one is signed up yet.
         </div>
       ) : (
@@ -32,11 +32,17 @@ export function Roster({
             key={teamIndex}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[28px] border border-white/10 bg-white/5 p-4"
+            className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm"
           >
-            <h3 className="mb-3 text-lg font-bold text-sky-300">
-              Team {teamIndex + 1}
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">
+                Team {teamIndex + 1}
+              </h3>
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+                {team.length} players
+              </span>
+            </div>
+
             <div className="space-y-2">
               {team.map((signup, playerIndex) => (
                 <motion.button
@@ -45,9 +51,9 @@ export function Roster({
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: playerIndex * 0.03 }}
                   onClick={() => onPlayerClick(signup.users)}
-                  className="flex w-full items-center gap-3 rounded-2xl bg-slate-950/30 px-3 py-3 text-left"
+                  className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
                 >
-                  <span className="w-6 text-sm text-slate-400">
+                  <span className="w-6 text-sm font-medium text-slate-400">
                     {teamIndex * 6 + playerIndex + 1}
                   </span>
                   <UserAvatar
@@ -55,7 +61,9 @@ export function Roster({
                     avatarUrl={signup.users.avatar_url}
                     size={40}
                   />
-                  <span className="font-medium">{signup.users.name}</span>
+                  <span className="font-medium text-slate-900">
+                    {signup.users.name}
+                  </span>
                 </motion.button>
               ))}
             </div>
