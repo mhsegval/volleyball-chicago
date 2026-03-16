@@ -15,8 +15,11 @@ function chunk<T>(items: T[], size: number) {
 
 function canSelfRemove(run: Run | null) {
   if (!run) return false;
+
   const start = new Date(`${run.date}T${run.start_time}`);
-  return new Date() < new Date(start.getTime() - 24 * 60 * 60 * 1000);
+  const cutoff = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+
+  return new Date() < cutoff;
 }
 
 function moveCurrentUserToTop(
@@ -137,11 +140,13 @@ export function Roster({
                         <span className="w-6 text-sm font-medium text-slate-400">
                           {teamIndex * 6 + playerIndex + 1}
                         </span>
+
                         <UserAvatar
                           name={signup.users.name}
                           avatarUrl={signup.users.avatar_url}
                           size={40}
                         />
+
                         <div className="min-w-0">
                           <span className="block truncate font-medium text-slate-900">
                             {signup.users.name}
