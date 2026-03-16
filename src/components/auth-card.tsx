@@ -14,20 +14,18 @@ export function AuthCard() {
     <div className="w-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
       {step === "request" ? (
         <form
+          autoComplete="off"
           onSubmit={(e) => {
             e.preventDefault();
-
             const fd = new FormData();
             fd.set("email", email);
 
             startTransition(async () => {
               const res = await sendOtp(fd);
-
               if (res?.error) {
                 setMessage(res.error);
                 return;
               }
-
               setStep("verify");
               setMessage("code sent to your email");
             });
@@ -44,10 +42,6 @@ export function AuthCard() {
             <p className="mt-2 text-sm text-slate-500">
               Enter your email to receive a one-time code.
             </p>
-            <p className="mt-2 text-sm text-slate-400">
-              New users will add their name and profile picture on the next
-              page.
-            </p>
           </div>
 
           <label className="block">
@@ -58,7 +52,9 @@ export function AuthCard() {
               <Mail className="h-4 w-4 text-slate-400" />
               <input
                 type="email"
+                name="auth_email"
                 required
+                autoComplete="email"
                 value={email ?? ""}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-transparent text-slate-900 outline-none"
@@ -77,20 +73,18 @@ export function AuthCard() {
         </form>
       ) : (
         <form
+          key={`verify-${email}`}
+          autoComplete="off"
           onSubmit={(e) => {
             e.preventDefault();
-
             const form = new FormData(e.currentTarget);
             const fd = new FormData();
             fd.set("email", email);
-            fd.set("token", String(form.get("otp") || ""));
+            fd.set("token", String(form.get("otp_code") || "").trim());
 
             startTransition(async () => {
               const res = await verifyOtp(fd);
-
-              if (res?.error) {
-                setMessage(res.error);
-              }
+              if (res?.error) setMessage(res.error);
             });
           }}
           className="space-y-4"
@@ -107,6 +101,16 @@ export function AuthCard() {
             </p>
           </div>
 
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            defaultValue={email}
+            className="hidden"
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
               one-time code
@@ -114,13 +118,14 @@ export function AuthCard() {
             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
               <Shield className="h-4 w-4 text-slate-400" />
               <input
-                name="otp"
+                name="otp_code"
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 autoCorrect="off"
                 autoCapitalize="none"
                 spellCheck={false}
+                defaultValue=""
                 required
                 className="w-full bg-transparent text-lg tracking-[0.3em] text-slate-900 outline-none"
               />

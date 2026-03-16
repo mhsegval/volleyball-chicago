@@ -9,14 +9,8 @@ export const dynamic = "force-dynamic";
 type SignupWithUser = Signup & { users: UserProfile };
 type PaymentRequestWithUser = PaymentRequest & { users?: UserProfile };
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export default async function AdminPage() {
   const supabase = await createClient();
-  const params = await searchParams;
-  const query = (params.q ?? "").trim();
 
   const {
     data: { user },
@@ -45,20 +39,7 @@ export default async function AdminPage({
         .select("*")
         .eq("status", "active")
         .maybeSingle<Run>(),
-
-      query
-        ? supabase
-            .from("users")
-            .select("*")
-            .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-            .order("name")
-            .limit(30)
-        : supabase
-            .from("users")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(30),
-
+      supabase.from("users").select("*").order("name"),
       supabase
         .from("payment_requests")
         .select("*")
@@ -80,7 +61,6 @@ export default async function AdminPage({
 
   const pendingPaymentsRaw = (pendingPaymentsRawResult.data ??
     []) as PaymentRequest[];
-
   const pendingUserIds = [...new Set(pendingPaymentsRaw.map((p) => p.user_id))];
 
   let pendingUsersMap = new Map<string, UserProfile>();
@@ -119,7 +99,6 @@ export default async function AdminPage({
         signups={signups}
         users={(usersResult.data ?? []) as UserProfile[]}
         pendingPayments={pendingPayments}
-        searchQuery={query}
       />
 
       <BottomBar isAdmin />

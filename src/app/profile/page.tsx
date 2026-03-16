@@ -4,6 +4,7 @@ import { updateOwnProfile } from "@/lib/actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { BottomBar } from "@/components/bottom-bar";
 import { PaymentModal } from "@/components/payment-modal";
+import { ProfileSaveButton } from "@/components/profile-save-button";
 import type { UserProfile, PaymentRequest } from "@/lib/types";
 import { ProfilePaymentSection } from "@/components/profile-payment-section";
 
@@ -155,9 +156,7 @@ export default async function ProfilePage() {
             />
           </label>
 
-          <button className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white">
-            save profile
-          </button>
+          <ProfileSaveButton label="save profile" />
         </form>
       </section>
 

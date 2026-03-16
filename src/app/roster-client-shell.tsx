@@ -22,13 +22,13 @@ export function RosterClientShell({
       <Roster
         run={run}
         currentUserId={currentUser.id}
+        isAdmin={currentUser.role === "admin"}
         signups={signups}
         onPlayerClick={(player) => {
           setSelected(player);
           setOpen(true);
         }}
       />
-
       <ProfileDrawer
         open={open}
         onClose={() => setOpen(false)}

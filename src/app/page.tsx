@@ -4,6 +4,7 @@ import { NextRunBanner } from "@/components/next-run-banner";
 import { PlayerAutocomplete } from "@/components/player-autocomplete";
 import { RosterClientShell } from "./roster-client-shell";
 import { BottomBar } from "@/components/bottom-bar";
+import { LowBalanceBanner } from "@/components/low-balance-banner";
 import { isNewUser } from "@/lib/format";
 import type { Run, Signup, UserProfile } from "@/lib/types";
 
@@ -76,6 +77,8 @@ export default async function HomePage() {
           isAdmin={profile.role === "admin"}
         />
       )}
+
+      <LowBalanceBanner balance={Number(profile.balance)} />
 
       <RosterClientShell
         currentUser={profile}

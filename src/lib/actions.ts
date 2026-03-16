@@ -10,8 +10,8 @@ export async function createPaymentRequest(formData: FormData) {
   const amount = Number(formData.get('amount') || 0);
   const method = String(formData.get('method') || '');
 
-  if (!amount || amount <= 0) {
-    return { error: 'invalid amount' };
+  if (!amount || amount <= 1) {
+    return { error: 'amount must be greater than 1' };
   }
 
   if (method !== 'zelle' && method !== 'venmo') {
@@ -23,9 +23,7 @@ export async function createPaymentRequest(formData: FormData) {
     p_method: method,
   });
 
-  if (error) {
-    return { error: error.message };
-  }
+  if (error) return { error: error.message };
 
   revalidatePath('/');
   revalidatePath('/profile');
@@ -258,19 +256,32 @@ export async function completeProfile(formData: FormData) {
 
   let avatarUrl: string | null = null;
 
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ];
+
   if (avatar && avatar.size > 0) {
-    const ext = avatar.name.split('.').pop() || 'png';
-    const path = `${user.id}/${Date.now()}.${ext}`;
+    if (!allowedTypes.includes(avatar.type)) {
+      return { error: 'please use jpg, png, webp, or iphone photo formats like heic/heif' };
+    }
+
+    const ext = avatar.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const safeExt = ext === 'heic' || ext === 'heif' ? 'jpg' : ext;
+    const path = `${user.id}/${Date.now()}.${safeExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(path, avatar, {
         upsert: true,
-        contentType: avatar.type || 'image/png',
+        contentType: avatar.type || 'image/jpeg',
       });
 
     if (uploadError) {
-      return { error: uploadError.message };
+      return { error: 'could not upload this photo. please try jpg or png if the issue continues' };
     }
 
     const { data: publicUrlData } = supabase.storage
@@ -313,19 +324,32 @@ export async function updateOwnProfile(formData: FormData) {
 
   let avatarUrl: string | null = null;
 
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ];
+
   if (avatar && avatar.size > 0) {
-    const ext = avatar.name.split('.').pop() || 'png';
-    const path = `${user.id}/${Date.now()}.${ext}`;
+    if (!allowedTypes.includes(avatar.type)) {
+      return { error: 'please use jpg, png, webp, or iphone photo formats like heic/heif' };
+    }
+
+    const ext = avatar.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const safeExt = ext === 'heic' || ext === 'heif' ? 'jpg' : ext;
+    const path = `${user.id}/${Date.now()}.${safeExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(path, avatar, {
         upsert: true,
-        contentType: avatar.type || 'image/png',
+        contentType: avatar.type || 'image/jpeg',
       });
 
     if (uploadError) {
-      return { error: uploadError.message };
+      return { error: 'could not upload this photo. please try jpg or png if the issue continues' };
     }
 
     const { data: publicUrlData } = supabase.storage

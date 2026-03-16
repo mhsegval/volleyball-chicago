@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
 import { X } from "lucide-react";
 import { rejectPaymentRequest } from "@/lib/actions";
+import { ActionConfirmButton } from "@/components/action-confirm-button";
 
 export function RejectPaymentButton({
   requestId,
@@ -13,36 +13,21 @@ export function RejectPaymentButton({
   amount: number;
   userName?: string;
 }) {
-  const [pending, startTransition] = useTransition();
-
-  function handleReject() {
-    const ok = window.confirm(
-      `Reject this payment for ${userName || "this user"}?\n\nThis will deduct $${Number(
-        amount,
-      ).toFixed(
-        2,
-      )} from the user's balance.\n\nPlease ask the player to retry the fund payment.`,
-    );
-
-    if (!ok) return;
-
+  async function handleReject() {
     const formData = new FormData();
     formData.set("request_id", requestId);
-
-    startTransition(async () => {
-      await rejectPaymentRequest(formData);
-    });
+    await rejectPaymentRequest(formData);
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleReject}
-      disabled={pending}
-      className="rounded-xl bg-red-50 p-3 text-red-600 disabled:opacity-60"
+    <ActionConfirmButton
+      buttonClassName="rounded-xl bg-red-50 p-3 text-red-600"
       title="reverse payment"
+      description={`This will deduct $${Number(amount).toFixed(2)} from ${userName || "this player"} and ask them to retry the payment.`}
+      confirmLabel="reverse payment"
+      onConfirm={handleReject}
     >
       <X className="h-4 w-4" />
-    </button>
+    </ActionConfirmButton>
   );
 }

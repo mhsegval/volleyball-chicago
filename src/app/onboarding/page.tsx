@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ProfileSaveButton } from "@/components/profile-save-button";
 import { completeProfile } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -62,9 +63,7 @@ export default async function OnboardingPage() {
             className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-sky-100 file:px-3 file:py-2 file:text-sky-700"
           />
 
-          <button className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white">
-            continue
-          </button>
+          <ProfileSaveButton label="continue" />
         </form>
       </div>
     </div>
