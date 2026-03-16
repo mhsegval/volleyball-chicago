@@ -1,16 +1,15 @@
 import {
   approvePaymentRequest,
   completeActiveRun,
-  createRunWithState,
-  updateRunWithState,
+  createRun,
+  updateRunDetails,
 } from "@/lib/actions";
 import { DeleteRunButton } from "@/components/delete-run-button";
 import { RejectPaymentButton } from "@/components/reject-payment-button";
 import { AdminUserManagement } from "@/components/admin-user-management";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import type { Run, Signup, UserProfile, PaymentRequest } from "@/lib/types";
 import { Check } from "lucide-react";
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 type AdminPanelProps = {
   activeRun: Run | null;
@@ -19,41 +18,20 @@ type AdminPanelProps = {
   pendingPayments: (PaymentRequest & { users?: UserProfile })[];
 };
 
-function SubmitButton({
-  idleLabel,
-  pendingLabel,
-  className,
-}: {
-  idleLabel: string;
-  pendingLabel: string;
-  className: string;
-}) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={`${className} disabled:opacity-60`}
-    >
-      {pending ? pendingLabel : idleLabel}
-    </button>
-  );
-}
-
 export function AdminPanel({
   activeRun,
   users,
   pendingPayments,
 }: AdminPanelProps) {
-  const [createState, createFormAction] = useActionState(
-    createRunWithState,
-    undefined,
-  );
-  const [updateState, updateFormAction] = useActionState(
-    updateRunWithState,
-    undefined,
-  );
+  async function submitCreateRun(formData: FormData) {
+    "use server";
+    await createRun(formData);
+  }
+
+  async function submitUpdateRun(formData: FormData) {
+    "use server";
+    await updateRunDetails(formData);
+  }
 
   async function submitCompleteActiveRun() {
     "use server";
@@ -128,7 +106,7 @@ export function AdminPanel({
         <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900">create next run</h2>
 
-          <form action={createFormAction} className="mt-4 space-y-4">
+          <form action={submitCreateRun} className="mt-4 space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
                 date
@@ -206,15 +184,7 @@ export function AdminPanel({
               />
             </label>
 
-            {createState?.error ? (
-              <p className="text-sm text-red-600">{createState.error}</p>
-            ) : null}
-
-            {createState?.success ? (
-              <p className="text-sm text-emerald-600">{createState.success}</p>
-            ) : null}
-
-            <SubmitButton
+            <FormSubmitButton
               idleLabel="create run"
               pendingLabel="creating run..."
               className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white"
@@ -236,7 +206,7 @@ export function AdminPanel({
               before creating another one.
             </p>
 
-            <form action={updateFormAction} className="mt-4 space-y-4">
+            <form action={submitUpdateRun} className="mt-4 space-y-4">
               <input type="hidden" name="run_id" value={activeRun.id} />
 
               <label className="block">
@@ -319,17 +289,7 @@ export function AdminPanel({
                 />
               </label>
 
-              {updateState?.error ? (
-                <p className="text-sm text-red-600">{updateState.error}</p>
-              ) : null}
-
-              {updateState?.success ? (
-                <p className="text-sm text-emerald-600">
-                  {updateState.success}
-                </p>
-              ) : null}
-
-              <SubmitButton
+              <FormSubmitButton
                 idleLabel="update active run"
                 pendingLabel="updating run..."
                 className="w-full rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white"
@@ -357,7 +317,7 @@ export function AdminPanel({
             </p>
 
             <form action={submitCompleteActiveRun} className="mt-4">
-              <SubmitButton
+              <FormSubmitButton
                 idleLabel="complete active run"
                 pendingLabel="completing run..."
                 className="w-full rounded-2xl bg-orange-500 px-4 py-3 font-semibold text-white"
