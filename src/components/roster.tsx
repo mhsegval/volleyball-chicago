@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { motion } from "framer-motion";
 import { UserAvatar } from "@/components/user-avatar";
 import { removeSignup } from "@/lib/actions";
@@ -28,6 +29,37 @@ function moveCurrentUserToTop(
   const mine = signups.find((s) => s.user_id === currentUserId);
   const others = signups.filter((s) => s.user_id !== currentUserId);
   return mine ? [mine, ...others] : signups;
+}
+
+function OptOutButton({ runId, userId }: { runId: string; userId: string }) {
+  const [pending, startTransition] = useTransition();
+
+  function handleOptOut() {
+    const ok = window.confirm(
+      "We understand plans can change. Please avoid late opt-outs to keep things fair.",
+    );
+
+    if (!ok) return;
+
+    const formData = new FormData();
+    formData.set("run_id", runId);
+    formData.set("user_id", userId);
+
+    startTransition(async () => {
+      await removeSignup(formData);
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleOptOut}
+      disabled={pending}
+      className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700 disabled:opacity-60"
+    >
+      {pending ? "opting out..." : "opt out"}
+    </button>
+  );
 }
 
 export function Roster({
@@ -113,29 +145,10 @@ export function Roster({
                       </button>
 
                       {isCurrentUser && allowSelfRemove && (
-                        <form
-                          action={removeSignup}
-                          onSubmit={(e) => {
-                            const ok = window.confirm(
-                              "We understand plans can change. Please avoid late opt-outs to keep things fair.",
-                            );
-                            if (!ok) e.preventDefault();
-                          }}
-                        >
-                          <input
-                            type="hidden"
-                            name="run_id"
-                            value={signup.run_id}
-                          />
-                          <input
-                            type="hidden"
-                            name="user_id"
-                            value={signup.user_id}
-                          />
-                          <button className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-                            opt out
-                          </button>
-                        </form>
+                        <OptOutButton
+                          runId={signup.run_id}
+                          userId={signup.user_id}
+                        />
                       )}
                     </div>
 
