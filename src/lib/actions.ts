@@ -23,7 +23,9 @@ export async function createPaymentRequest(formData: FormData) {
     p_method: method,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    return { error: error.message };
+  }
 
   revalidatePath('/');
   revalidatePath('/profile');
