@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   updateUserBalance,
   updateUserName,
@@ -10,19 +10,115 @@ import type { UserProfile } from "@/lib/types";
 
 const PAGE_SIZE = 8;
 
+function UserCard({ user }: { user: UserProfile }) {
+  const [pending, startTransition] = useTransition();
+
+  function handleNameSubmit(formData: FormData) {
+    startTransition(async () => {
+      await updateUserName(formData);
+    });
+  }
+
+  function handleBalanceSubmit(formData: FormData) {
+    startTransition(async () => {
+      await updateUserBalance(formData);
+    });
+  }
+
+  function handleRoleSubmit(formData: FormData) {
+    startTransition(async () => {
+      await updateUserRole(formData);
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3">
+        <p className="font-medium text-slate-900">
+          {user.name || "unnamed user"}
+        </p>
+        <p className="text-sm text-slate-500">{user.email || "no email"}</p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
+          current role: {user.role}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <form
+          action={handleNameSubmit}
+          className="flex flex-col gap-2 sm:flex-row"
+        >
+          <input type="hidden" name="user_id" value={user.id} />
+          <input
+            name="name"
+            defaultValue={user.name}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none"
+          />
+          <button
+            disabled={pending}
+            className="rounded-xl bg-sky-50 px-3 py-2 text-sky-700 disabled:opacity-60"
+          >
+            save name
+          </button>
+        </form>
+
+        <form
+          action={handleBalanceSubmit}
+          className="flex flex-col gap-2 sm:flex-row"
+        >
+          <input type="hidden" name="user_id" value={user.id} />
+          <input
+            name="balance"
+            type="number"
+            step="0.01"
+            defaultValue={user.balance}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none"
+          />
+          <button
+            disabled={pending}
+            className="rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700 disabled:opacity-60"
+          >
+            save balance
+          </button>
+        </form>
+
+        <form
+          action={handleRoleSubmit}
+          className="flex flex-col gap-2 sm:flex-row"
+        >
+          <input type="hidden" name="user_id" value={user.id} />
+          <input
+            type="hidden"
+            name="role"
+            value={user.role === "admin" ? "user" : "admin"}
+          />
+          <button
+            disabled={pending}
+            className={`rounded-xl px-3 py-2 disabled:opacity-60 ${
+              user.role === "admin"
+                ? "bg-orange-50 text-orange-700"
+                : "bg-purple-50 text-purple-700"
+            }`}
+          >
+            {user.role === "admin" ? "remove admin" : "make admin"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export function AdminUserManagement({ users }: { users: UserProfile[] }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase();
-
     if (!q) return users;
 
     return users.filter((user) => {
       const name = (user.name || "").toLowerCase();
       const email = (user.email || "").toLowerCase();
-
       return name.includes(q) || email.includes(q);
     });
   }, [users, query]);
@@ -82,77 +178,7 @@ export function AdminUserManagement({ users }: { users: UserProfile[] }) {
 
       <div className="mt-4 space-y-4">
         {paginatedUsers.map((user) => (
-          <div
-            key={user.id}
-            className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-          >
-            <div className="mb-3">
-              <p className="font-medium text-slate-900">
-                {user.name || "unnamed user"}
-              </p>
-              <p className="text-sm text-slate-500">
-                {user.email || "no email"}
-              </p>
-              <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
-                current role: {user.role}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <form
-                action={updateUserName}
-                className="flex flex-col gap-2 sm:flex-row"
-              >
-                <input type="hidden" name="user_id" value={user.id} />
-                <input
-                  name="name"
-                  defaultValue={user.name}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none"
-                />
-                <button className="rounded-xl bg-sky-50 px-3 py-2 text-sky-700">
-                  save name
-                </button>
-              </form>
-
-              <form
-                action={updateUserBalance}
-                className="flex flex-col gap-2 sm:flex-row"
-              >
-                <input type="hidden" name="user_id" value={user.id} />
-                <input
-                  name="balance"
-                  type="number"
-                  step="0.01"
-                  defaultValue={user.balance}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none"
-                />
-                <button className="rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700">
-                  save balance
-                </button>
-              </form>
-
-              <form
-                action={updateUserRole}
-                className="flex flex-col gap-2 sm:flex-row"
-              >
-                <input type="hidden" name="user_id" value={user.id} />
-                <input
-                  type="hidden"
-                  name="role"
-                  value={user.role === "admin" ? "user" : "admin"}
-                />
-                <button
-                  className={`rounded-xl px-3 py-2 ${
-                    user.role === "admin"
-                      ? "bg-orange-50 text-orange-700"
-                      : "bg-purple-50 text-purple-700"
-                  }`}
-                >
-                  {user.role === "admin" ? "remove admin" : "make admin"}
-                </button>
-              </form>
-            </div>
-          </div>
+          <UserCard key={user.id} user={user} />
         ))}
 
         {paginatedUsers.length === 0 && (
