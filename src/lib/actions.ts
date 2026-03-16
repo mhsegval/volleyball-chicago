@@ -206,38 +206,16 @@ export async function updateRunDetails(formData: FormData) {
   const total_rent = Number(formData.get('total_rent') || 0);
   const max_players = Number(formData.get('max_players') || 0);
 
-  if (!runId) {
-    return { error: 'run id is required' };
-  }
-
-  if (!date || !start_time || !end_time || !gym_name || !location_url) {
-    return { error: 'please fill all run fields' };
-  }
-
-  if (!total_rent || total_rent <= 0) {
-    return { error: 'total rent must be greater than 0' };
-  }
-
-  if (!max_players || max_players <= 0) {
-    return { error: 'max players must be greater than 0' };
-  }
-
-  if (end_time <= start_time) {
-    return { error: 'end time must be after start time' };
-  }
-
-  const { error } = await supabase
-    .from('runs')
-    .update({
-      date,
-      start_time,
-      end_time,
-      gym_name,
-      location_url,
-      total_rent,
-      max_players,
-    })
-    .eq('id', runId);
+  const { error } = await supabase.rpc('update_run_admin', {
+    p_run_id: runId,
+    p_date: date,
+    p_start_time: start_time,
+    p_end_time: end_time,
+    p_gym_name: gym_name,
+    p_location_url: location_url,
+    p_total_rent: total_rent,
+    p_max_players: max_players,
+  });
 
   if (error) {
     return { error: error.message };
