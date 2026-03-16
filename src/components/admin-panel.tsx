@@ -169,20 +169,36 @@ export function AdminPanel({
               />
             </label>
 
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                total rent ($)
-              </span>
-              <input
-                name="total_rent"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="e.g. 120"
-                required
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-              />
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  total rent ($)
+                </span>
+                <input
+                  name="total_rent"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 120"
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  max players
+                </span>
+                <input
+                  name="max_players"
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 12"
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                />
+              </label>
+            </div>
 
             <FormSubmitButton
               idleLabel="create run"
@@ -274,20 +290,36 @@ export function AdminPanel({
                 />
               </label>
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">
-                  total rent ($)
-                </span>
-                <input
-                  name="total_rent"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  defaultValue={activeRun.total_rent}
-                  required
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-                />
-              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    total rent ($)
+                  </span>
+                  <input
+                    name="total_rent"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={activeRun.total_rent}
+                    required
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    max players
+                  </span>
+                  <input
+                    name="max_players"
+                    type="number"
+                    min="1"
+                    defaultValue={activeRun.max_players}
+                    required
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
+                  />
+                </label>
+              </div>
 
               <FormSubmitButton
                 idleLabel="update active run"

@@ -1,9 +1,8 @@
 export type UserRole = 'user' | 'admin';
-
 export type RunStatus = 'active' | 'completed';
-
 export type PaymentMethod = 'zelle' | 'venmo';
 export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+export type SignupStatus = 'roster' | 'waitlist';
 
 export type UserProfile = {
   id: string;
@@ -24,6 +23,7 @@ export type Run = {
   gym_name: string;
   location_url: string;
   total_rent: number;
+  max_players: number;
   status: RunStatus;
   created_at?: string;
 };
@@ -32,6 +32,8 @@ export type Signup = {
   id: string;
   run_id: string;
   user_id: string;
+  status: SignupStatus;
+  waitlist_position: number | null;
   created_at: string;
 };
 

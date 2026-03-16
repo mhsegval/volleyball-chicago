@@ -29,6 +29,7 @@ export function RosterClientShell({
           setOpen(true);
         }}
       />
+
       <ProfileDrawer
         open={open}
         onClose={() => setOpen(false)}

@@ -6,13 +6,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { removeSignup } from "@/lib/actions";
 import type { Signup, UserProfile, Run } from "@/lib/types";
 
-function chunk<T>(items: T[], size: number) {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size)
-    out.push(items.slice(i, i + size));
-  return out;
-}
-
 function canSelfRemove(run: Run | null) {
   if (!run) return false;
 
@@ -22,13 +15,20 @@ function canSelfRemove(run: Run | null) {
   return new Date() < cutoff;
 }
 
-function moveCurrentUserToTop(
-  signups: (Signup & { users: UserProfile })[],
+function moveCurrentUserToTop<T extends Signup & { users: UserProfile }>(
+  signups: T[],
   currentUserId: string,
 ) {
   const mine = signups.find((s) => s.user_id === currentUserId);
   const others = signups.filter((s) => s.user_id !== currentUserId);
   return mine ? [mine, ...others] : signups;
+}
+
+function chunk<T>(items: T[], size: number) {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size)
+    out.push(items.slice(i, i + size));
+  return out;
 }
 
 function RemoveButton({
@@ -82,15 +82,30 @@ export function Roster({
   signups: (Signup & { users: UserProfile })[];
   onPlayerClick: (player: UserProfile) => void;
 }) {
-  const orderedSignups = moveCurrentUserToTop(signups, currentUserId);
-  const teams = chunk(orderedSignups, 6);
   const allowSelfRemove = canSelfRemove(run);
+
+  const rosterPlayers = moveCurrentUserToTop(
+    signups.filter((s) => s.status === "roster"),
+    currentUserId,
+  );
+
+  const waitlistPlayers = moveCurrentUserToTop(
+    [...signups.filter((s) => s.status === "waitlist")].sort(
+      (a, b) => (a.waitlist_position ?? 9999) - (b.waitlist_position ?? 9999),
+    ),
+    currentUserId,
+  );
+
+  const teams = chunk(rosterPlayers, 6);
 
   return (
     <section className="space-y-4">
       <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-medium text-slate-600">
-          {signups.length} player{signups.length === 1 ? "" : "s"} signed up
+          {rosterPlayers.length} on roster
+          {run
+            ? ` · ${waitlistPlayers.length} on waitlist · limit ${run.max_players}`
+            : ""}
         </p>
       </div>
 
@@ -187,6 +202,83 @@ export function Roster({
             </div>
           </motion.div>
         ))
+      )}
+
+      {waitlistPlayers.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[28px] border border-amber-200 bg-amber-50 p-4 shadow-sm"
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-lg font-bold text-slate-900">Waitlist</h3>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-amber-700">
+              {waitlistPlayers.length} waiting
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {waitlistPlayers.map((signup) => {
+              const isCurrentUser = signup.user_id === currentUserId;
+
+              return (
+                <div
+                  key={signup.id}
+                  className={`rounded-2xl border px-3 py-3 ${
+                    isCurrentUser
+                      ? "border-amber-300 bg-white"
+                      : "border-amber-200 bg-white/80"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onPlayerClick(signup.users)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <span className="w-8 text-sm font-medium text-amber-700">
+                        #{signup.waitlist_position}
+                      </span>
+
+                      <UserAvatar
+                        name={signup.users.name}
+                        avatarUrl={signup.users.avatar_url}
+                        size={40}
+                      />
+
+                      <div className="min-w-0">
+                        <span className="block truncate font-medium text-slate-900">
+                          {signup.users.name}
+                        </span>
+                        {isCurrentUser && (
+                          <span className="text-xs font-medium text-amber-700">
+                            you are on the waitlist
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    {isAdmin ? (
+                      <RemoveButton
+                        runId={signup.run_id}
+                        userId={signup.user_id}
+                        label="remove"
+                        message={`Remove ${signup.users.name} from the waitlist?`}
+                      />
+                    ) : isCurrentUser && allowSelfRemove ? (
+                      <RemoveButton
+                        runId={signup.run_id}
+                        userId={signup.user_id}
+                        label="leave"
+                        message="We understand plans can change. Please avoid late opt-outs to keep things fair."
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
       )}
     </section>
   );

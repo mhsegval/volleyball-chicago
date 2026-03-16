@@ -4,12 +4,13 @@ import { NextRunBanner } from "@/components/next-run-banner";
 import { PlayerAutocomplete } from "@/components/player-autocomplete";
 import { RosterClientShell } from "./roster-client-shell";
 import { BottomBar } from "@/components/bottom-bar";
-import { LowBalanceBanner } from "@/components/low-balance-banner";
 import { isNewUser } from "@/lib/format";
+import { LowBalanceBanner } from "@/components/low-balance-banner";
 import type { Run, Signup, UserProfile } from "@/lib/types";
 
-type SignupWithUser = Signup & { users: UserProfile };
 export const dynamic = "force-dynamic";
+
+type SignupWithUser = Signup & { users: UserProfile };
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -56,6 +57,7 @@ export default async function HomePage() {
         .from("signups")
         .select("*, users(*)")
         .eq("run_id", activeRun.id)
+        .order("status", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase.rpc("current_estimated_rent", { p_run_id: activeRun.id }),
     ]);
@@ -67,6 +69,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-5 px-4 py-5 pb-32">
       <NextRunBanner run={activeRun} estimatedRent={estimatedRent} />
+      <LowBalanceBanner balance={Number(profile.balance)} />
 
       {activeRun && (
         <PlayerAutocomplete
@@ -77,8 +80,6 @@ export default async function HomePage() {
           isAdmin={profile.role === "admin"}
         />
       )}
-
-      <LowBalanceBanner balance={Number(profile.balance)} />
 
       <RosterClientShell
         currentUser={profile}
