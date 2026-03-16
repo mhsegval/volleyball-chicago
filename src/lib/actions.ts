@@ -4,6 +4,33 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
+
+export async function createRunWithState(
+  _prevState: { error?: string; success?: string } | undefined,
+  formData: FormData
+) {
+  const result = await createRun(formData);
+
+  if (result?.error) {
+    return { error: result.error };
+  }
+
+  return { success: 'run created successfully' };
+}
+
+export async function updateRunWithState(
+  _prevState: { error?: string; success?: string } | undefined,
+  formData: FormData
+) {
+  const result = await updateRunDetails(formData);
+
+  if (result?.error) {
+    return { error: result.error };
+  }
+
+  return { success: 'run updated successfully' };
+}
+
 export async function createPaymentRequest(formData: FormData) {
   const { supabase } = await requireUser();
 
@@ -426,19 +453,72 @@ export async function createRun(formData: FormData) {
 
   await supabase.rpc('complete_expired_runs');
 
+  const date = String(formData.get('date') || '').trim();
+  const start_time = String(formData.get('start_time') || '').trim();
+  const end_time = String(formData.get('end_time') || '').trim();
+  const gym_name = String(formData.get('gym_name') || '').trim();
+  const location_url = String(formData.get('location_url') || '').trim();
+  const total_rent = Number(formData.get('total_rent') || 0);
+
+  if (!date || !start_time || !end_time || !gym_name || !location_url) {
+    return { error: 'please fill all run fields' };
+  }
+
+  if (!total_rent || total_rent <= 0) {
+    return { error: 'total rent must be greater than 0' };
+  }
+
+  if (end_time <= start_time) {
+    return { error: 'end time must be after start time' };
+  }
+
+  const { data: existingRun } = await supabase
+    .from('runs')
+    .select('id')
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (existingRun) {
+    return { error: 'an active run already exists. edit or delete it first.' };
+  }
+
+  const nowInChicago = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const getPart = (type: string) =>
+    nowInChicago.find((part) => part.type === type)?.value || '';
+
+  const chicagoDate = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+  const chicagoTime = `${getPart('hour')}:${getPart('minute')}`;
+
+  const runAlreadyEnded =
+    date < chicagoDate || (date === chicagoDate && end_time.slice(0, 5) <= chicagoTime);
+
+  if (runAlreadyEnded) {
+    return { error: 'please create a run with a future end time' };
+  }
+
   const payload = {
-    date: String(formData.get('date') || ''),
-    start_time: String(formData.get('start_time') || ''),
-    end_time: String(formData.get('end_time') || ''),
-    gym_name: String(formData.get('gym_name') || '').trim(),
-    location_url: String(formData.get('location_url') || '').trim(),
-    total_rent: Number(formData.get('total_rent') || 0),
-    status: 'active',
+    date,
+    start_time,
+    end_time,
+    gym_name,
+    location_url,
+    total_rent,
+    status: 'active' as const,
   };
 
   const { error } = await supabase.from('runs').insert(payload);
 
   if (error) {
+    console.error('createRun insert error:', error);
     return { error: error.message };
   }
 
