@@ -460,65 +460,16 @@ export async function createRun(formData: FormData) {
   const location_url = String(formData.get('location_url') || '').trim();
   const total_rent = Number(formData.get('total_rent') || 0);
 
-  if (!date || !start_time || !end_time || !gym_name || !location_url) {
-    return { error: 'please fill all run fields' };
-  }
-
-  if (!total_rent || total_rent <= 0) {
-    return { error: 'total rent must be greater than 0' };
-  }
-
-  if (end_time <= start_time) {
-    return { error: 'end time must be after start time' };
-  }
-
-  const { data: existingRun } = await supabase
-    .from('runs')
-    .select('id')
-    .eq('status', 'active')
-    .maybeSingle();
-
-  if (existingRun) {
-    return { error: 'an active run already exists. edit or delete it first.' };
-  }
-
-  const nowInChicago = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'America/Chicago',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date());
-
-  const getPart = (type: string) =>
-    nowInChicago.find((part) => part.type === type)?.value || '';
-
-  const chicagoDate = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
-  const chicagoTime = `${getPart('hour')}:${getPart('minute')}`;
-
-  const runAlreadyEnded =
-    date < chicagoDate || (date === chicagoDate && end_time.slice(0, 5) <= chicagoTime);
-
-  if (runAlreadyEnded) {
-    return { error: 'please create a run with a future end time' };
-  }
-
-  const payload = {
-    date,
-    start_time,
-    end_time,
-    gym_name,
-    location_url,
-    total_rent,
-    status: 'active' as const,
-  };
-
-  const { error } = await supabase.from('runs').insert(payload);
+  const { error } = await supabase.rpc('create_run_admin', {
+    p_date: date,
+    p_start_time: start_time,
+    p_end_time: end_time,
+    p_gym_name: gym_name,
+    p_location_url: location_url,
+    p_total_rent: total_rent,
+  });
 
   if (error) {
-    console.error('createRun insert error:', error);
     return { error: error.message };
   }
 
