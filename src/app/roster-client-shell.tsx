@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { Roster } from "@/components/roster";
 import { ProfileDrawer } from "@/components/profile-drawer";
-import type { Signup, UserProfile } from "@/lib/types";
+import type { Signup, UserProfile, Run } from "@/lib/types";
 
 export function RosterClientShell({
   currentUser,
+  run,
   signups,
 }: {
   currentUser: UserProfile;
+  run: Run | null;
   signups: (Signup & { users: UserProfile })[];
 }) {
   const [selected, setSelected] = useState<UserProfile>(currentUser);
@@ -18,6 +20,8 @@ export function RosterClientShell({
   return (
     <>
       <Roster
+        run={run}
+        currentUserId={currentUser.id}
         signups={signups}
         onPlayerClick={(player) => {
           setSelected(player);

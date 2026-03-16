@@ -77,7 +77,11 @@ export default async function HomePage() {
         />
       )}
 
-      <RosterClientShell currentUser={profile} signups={signups} />
+      <RosterClientShell
+        currentUser={profile}
+        run={activeRun}
+        signups={signups}
+      />
 
       <BottomBar isAdmin={profile.role === "admin"} />
     </div>
