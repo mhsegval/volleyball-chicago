@@ -6,6 +6,7 @@ import { BottomBar } from "@/components/bottom-bar";
 import { PaymentModal } from "@/components/payment-modal";
 import { ProfileSaveButton } from "@/components/profile-save-button";
 import type { UserProfile, PaymentRequest } from "@/lib/types";
+import { ProfileEditForm } from "@/components/profile-edit-form";
 import { ProfilePaymentSection } from "@/components/profile-payment-section";
 
 export const dynamic = "force-dynamic";
@@ -131,33 +132,7 @@ export default async function ProfilePage() {
           Update your display name or profile picture anytime.
         </p>
 
-        <form action={submitProfile} className="mt-5 space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              name
-            </span>
-            <input
-              name="name"
-              defaultValue={profile.name ?? ""}
-              required
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              profile picture
-            </span>
-            <input
-              name="avatar"
-              type="file"
-              accept="image/*"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:text-sky-700"
-            />
-          </label>
-
-          <ProfileSaveButton label="save profile" />
-        </form>
+        <ProfileEditForm defaultName={profile.name ?? ""} />
       </section>
 
       <BottomBar isAdmin={profile.role === "admin"} />

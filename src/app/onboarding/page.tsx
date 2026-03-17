@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ProfileSaveButton } from "@/components/profile-save-button";
+import { OnboardingForm } from "@/components/onboarding-form";
 import { completeProfile } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -46,25 +47,7 @@ export default async function OnboardingPage() {
           Add your name now. A profile picture is optional and you can always
           add it later.
         </p>
-
-        <form action={submitProfile} className="mt-6 space-y-4">
-          <input
-            name="name"
-            defaultValue={profile?.name ?? ""}
-            placeholder="your name"
-            required
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
-          />
-
-          <input
-            name="avatar"
-            type="file"
-            accept="image/*"
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-sky-100 file:px-3 file:py-2 file:text-sky-700"
-          />
-
-          <ProfileSaveButton label="continue" />
-        </form>
+        <OnboardingForm defaultName={profile?.name ?? ""} />
       </div>
     </div>
   );
