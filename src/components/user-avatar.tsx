@@ -3,30 +3,37 @@ import Image from "next/image";
 export function UserAvatar({
   name,
   avatarUrl,
-  size = 44,
+  size = 40,
 }: {
   name: string;
   avatarUrl?: string | null;
   size?: number;
 }) {
-  if (avatarUrl) {
-    return (
-      <Image
-        src={avatarUrl}
-        alt={name}
-        width={size}
-        height={size}
-        className="rounded-full object-cover ring-1 ring-slate-200"
-      />
-    );
-  }
+  const initials = (name || "?")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
 
   return (
     <div
-      className="grid rounded-full bg-gradient-to-br from-sky-100 to-emerald-100 font-semibold text-slate-700 ring-1 ring-slate-200"
-      style={{ width: size, height: size, placeItems: "center" }}
+      className="relative shrink-0 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200"
+      style={{ width: size, height: size }}
     >
-      {name?.slice(0, 1).toUpperCase() || "?"}
+      {avatarUrl ? (
+        <Image
+          src={avatarUrl}
+          alt={name || "user avatar"}
+          fill
+          className="object-cover"
+          sizes={`${size}px`}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600">
+          {initials || "?"}
+        </div>
+      )}
     </div>
   );
 }
