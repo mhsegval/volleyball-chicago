@@ -14,40 +14,56 @@ export function ProfilePaymentSection({
 
   return (
     <>
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
         {hasPendingPayment ? (
           <>
-            <h2 className="text-xl font-bold text-slate-900">
-              payment pending
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+              payments
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+              payment under review
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Your payment was submitted and is waiting for admin review.
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Your balance update is pending review. No further action is needed
+              right now.
             </p>
           </>
         ) : lowBalance ? (
           <>
-            <h2 className="text-xl font-bold text-slate-900">low balance</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Your balance is $10 or less. Add funds now to avoid signup issues.
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">
+              balance
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+              balance is running low
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Add funds now to avoid any signup issues for upcoming runs.
             </p>
           </>
         ) : (
           <>
-            <h2 className="text-xl font-bold text-slate-900">add funds</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Top up your balance using Zelle or Venmo.
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+              balance
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+              add funds
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Top up your balance anytime with Zelle or Venmo.
             </p>
           </>
         )}
 
-        <div className="mt-4">
-          <button
-            onClick={() => setOpen(true)}
-            className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white"
-          >
-            pay now
-          </button>
-        </div>
+        {!hasPendingPayment && (
+          <div className="mt-5">
+            <button
+              onClick={() => setOpen(true)}
+              className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white"
+            >
+              add funds
+            </button>
+          </div>
+        )}
       </section>
 
       <PaymentModal open={open} onClose={() => setOpen(false)} />

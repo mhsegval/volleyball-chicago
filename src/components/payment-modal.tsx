@@ -80,11 +80,14 @@ export function PaymentModal({
             {step === "pick" ? (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">
-                    pay balance
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+                    balance
+                  </p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                    add funds
                   </h3>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Enter an amount greater than $1 and choose a payment method.
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Enter an amount above $1 and choose how you want to send it.
                   </p>
                 </div>
 
@@ -98,7 +101,7 @@ export function PaymentModal({
                     step="0.01"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="e.g. 20"
+                    placeholder="20"
                     required
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
                   />
@@ -115,9 +118,9 @@ export function PaymentModal({
                       setMethod("zelle");
                       setStep("instructions");
                     }}
-                    className="rounded-2xl bg-emerald-50 px-4 py-3 font-medium text-emerald-700"
+                    className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-medium text-emerald-700 transition active:scale-[0.98]"
                   >
-                    pay via zelle
+                    pay with zelle
                   </button>
 
                   <button
@@ -130,9 +133,9 @@ export function PaymentModal({
                       setMethod("venmo");
                       setStep("instructions");
                     }}
-                    className="rounded-2xl bg-sky-50 px-4 py-3 font-medium text-sky-700"
+                    className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 font-medium text-sky-700 transition active:scale-[0.98]"
                   >
-                    pay via venmo
+                    pay with venmo
                   </button>
                 </div>
 
@@ -141,25 +144,28 @@ export function PaymentModal({
             ) : (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">
-                    {method === "zelle"
-                      ? "zelle instructions"
-                      : "venmo instructions"}
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+                    {method}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                    payment details
                   </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Send your payment first, then confirm it in the app.
+                  </p>
                 </div>
 
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
                   <div className="flex items-start gap-3">
                     <Info className="mt-0.5 h-4 w-4 text-sky-700" />
-                    <p className="text-sm text-sky-800">
-                      Send your payment to the email below, then confirm in the
-                      app.
+                    <p className="text-sm leading-6 text-sky-800">
+                      Send the amount to the email below and then tap confirm.
                     </p>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                     payment email
                   </p>
                   <div className="flex items-center gap-2">
@@ -186,7 +192,7 @@ export function PaymentModal({
                     href="https://venmo.com/test53"
                     target="_blank"
                     rel="noreferrer"
-                    className="flex w-full items-center justify-center rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white"
+                    className="flex w-full items-center justify-center rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white transition active:scale-[0.98]"
                   >
                     open venmo
                   </a>
@@ -198,7 +204,7 @@ export function PaymentModal({
                   onClick={handleConfirmPaid}
                   className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
                 >
-                  {pending ? "confirming..." : "i have paid"}
+                  {pending ? "confirming payment..." : "I have paid"}
                 </button>
 
                 <button

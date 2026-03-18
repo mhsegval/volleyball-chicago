@@ -35,11 +35,11 @@ function UserCard({ user }: { user: UserProfile }) {
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="mb-3">
         <p className="font-medium text-slate-900">
-          {user.name || "unnamed user"}
+          {user.name || "Unnamed user"}
         </p>
-        <p className="text-sm text-slate-500">{user.email || "no email"}</p>
+        <p className="text-sm text-slate-500">{user.email || "No email"}</p>
         <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
-          current role: {user.role}
+          role · {user.role}
         </p>
       </div>
 
@@ -100,7 +100,9 @@ function UserCard({ user }: { user: UserProfile }) {
                 : "bg-purple-50 text-purple-700"
             }`}
           >
-            {user.role === "admin" ? "remove admin" : "make admin"}
+            {user.role === "admin"
+              ? "remove admin access"
+              : "grant admin access"}
           </button>
         </form>
       </div>
@@ -131,9 +133,16 @@ export function AdminUserManagement({ users }: { users: UserProfile[] }) {
   }, [filteredUsers, page]);
 
   return (
-    <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-slate-900">user management</h2>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+            players
+          </p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            user management
+          </h2>
+        </div>
         <span className="text-xs text-slate-400">
           {filteredUsers.length} result{filteredUsers.length === 1 ? "" : "s"}
         </span>
@@ -147,7 +156,7 @@ export function AdminUserManagement({ users }: { users: UserProfile[] }) {
             setQuery(e.target.value);
             setPage(1);
           }}
-          placeholder="search by name or email"
+          placeholder="Search by name or email"
           className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none"
         />
       </div>
@@ -182,7 +191,9 @@ export function AdminUserManagement({ users }: { users: UserProfile[] }) {
         ))}
 
         {paginatedUsers.length === 0 && (
-          <p className="text-sm text-slate-500">no users found.</p>
+          <p className="text-sm text-slate-500">
+            No users matched your search.
+          </p>
         )}
       </div>
     </section>

@@ -21,9 +21,9 @@ export function RejectPaymentButton({
 
   return (
     <ActionConfirmButton
-      buttonClassName="rounded-xl bg-red-50 p-3 text-red-600"
+      buttonClassName="rounded-xl border border-red-200 bg-red-50 p-3 text-red-600 transition active:scale-[0.98]"
       title="reverse payment"
-      description={`This will deduct $${Number(amount).toFixed(2)} from ${userName || "this player"} and ask them to retry the payment.`}
+      description={`This removes $${Number(amount).toFixed(2)} from ${userName || "this player"} and lets them try again.`}
       confirmLabel="reverse payment"
       onConfirm={handleReject}
     >

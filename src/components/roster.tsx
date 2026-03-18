@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { motion } from "framer-motion";
+import { Users, Clock3 } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 import { removeSignup } from "@/lib/actions";
 import type { Signup, UserProfile, Run } from "@/lib/types";
@@ -62,9 +63,9 @@ function RemoveButton({
       type="button"
       onClick={handleClick}
       disabled={pending}
-      className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700 disabled:opacity-60"
+      className="rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition active:scale-[0.98] disabled:opacity-60"
     >
-      {pending ? "removing..." : label}
+      {pending ? "working..." : label}
     </button>
   );
 }
@@ -100,32 +101,51 @@ export function Roster({
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-sm font-medium text-slate-600">
-          {rosterPlayers.length} on roster
-          {run
-            ? ` · ${waitlistPlayers.length} on waitlist · limit ${run.max_players}`
-            : ""}
-        </p>
+      <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+              players
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+              roster
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              {rosterPlayers.length} on roster
+              {run
+                ? ` · ${waitlistPlayers.length} on waitlist · limit ${run.max_players}`
+                : ""}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-slate-700">
+              <Users className="h-4 w-4" />
+              <span className="text-sm font-semibold">
+                {rosterPlayers.length}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {teams.length === 0 ? (
-        <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500 shadow-sm">
+        <div className="rounded-[32px] border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500 shadow-sm">
           no one is signed up yet.
         </div>
       ) : (
         teams.map((team, teamIndex) => (
           <motion.div
             key={teamIndex}
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm"
           >
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">
                 Team {teamIndex + 1}
               </h3>
-              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
                 {team.length} players
               </span>
             </div>
@@ -137,13 +157,13 @@ export function Roster({
                 return (
                   <motion.div
                     key={signup.id}
-                    initial={{ opacity: 0, scale: 0.98 }}
+                    initial={{ opacity: 0, scale: 0.99 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: playerIndex * 0.03 }}
-                    className={`rounded-2xl border px-3 py-3 ${
+                    transition={{ delay: playerIndex * 0.02 }}
+                    className={`rounded-2xl border px-3 py-3 transition ${
                       isCurrentUser
-                        ? "border-sky-200 bg-sky-50/60"
-                        : "border-slate-200 bg-white"
+                        ? "border-sky-200 bg-sky-50/70"
+                        : "border-slate-200 bg-slate-50/60"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -159,17 +179,17 @@ export function Roster({
                         <UserAvatar
                           name={signup.users.name}
                           avatarUrl={signup.users.avatar_url}
-                          size={40}
+                          size={42}
                         />
 
                         <div className="min-w-0">
-                          <span className="block truncate font-medium text-slate-900">
+                          <p className="truncate font-medium text-slate-900">
                             {signup.users.name}
-                          </span>
+                          </p>
                           {isCurrentUser && (
-                            <span className="text-xs font-medium text-sky-700">
+                            <p className="text-xs font-medium text-sky-700">
                               you
-                            </span>
+                            </p>
                           )}
                         </div>
                       </button>
@@ -185,15 +205,16 @@ export function Roster({
                         <RemoveButton
                           runId={signup.run_id}
                           userId={signup.user_id}
-                          label="opt out"
+                          label="leave"
                           message="We understand plans can change. Please avoid late opt-outs to keep things fair."
                         />
                       ) : null}
                     </div>
 
                     {isCurrentUser && !isAdmin && !allowSelfRemove && (
-                      <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                        Opt-out closes 24 hours before game start.
+                      <div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs text-slate-600">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        opt-out closes 24 hours before start
                       </div>
                     )}
                   </motion.div>
@@ -206,13 +227,13 @@ export function Roster({
 
       {waitlistPlayers.length > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[28px] border border-amber-200 bg-amber-50 p-4 shadow-sm"
+          className="rounded-[32px] border border-amber-200 bg-amber-50/70 p-4 shadow-sm"
         >
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-bold text-slate-900">Waitlist</h3>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-amber-700">
+            <span className="rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-medium text-amber-700">
               {waitlistPlayers.length} waiting
             </span>
           </div>
@@ -236,24 +257,24 @@ export function Roster({
                       onClick={() => onPlayerClick(signup.users)}
                       className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     >
-                      <span className="w-8 text-sm font-medium text-amber-700">
+                      <span className="w-8 text-sm font-semibold text-amber-700">
                         #{signup.waitlist_position}
                       </span>
 
                       <UserAvatar
                         name={signup.users.name}
                         avatarUrl={signup.users.avatar_url}
-                        size={40}
+                        size={42}
                       />
 
                       <div className="min-w-0">
-                        <span className="block truncate font-medium text-slate-900">
+                        <p className="truncate font-medium text-slate-900">
                           {signup.users.name}
-                        </span>
+                        </p>
                         {isCurrentUser && (
-                          <span className="text-xs font-medium text-amber-700">
-                            you are on the waitlist
-                          </span>
+                          <p className="text-xs font-medium text-amber-700">
+                            waitlist · position #{signup.waitlist_position}
+                          </p>
                         )}
                       </div>
                     </button>

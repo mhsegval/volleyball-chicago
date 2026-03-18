@@ -11,7 +11,7 @@ export function AuthCard() {
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="w-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="w-full rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
       {step === "request" ? (
         <form
           autoComplete="off"
@@ -22,12 +22,14 @@ export function AuthCard() {
 
             startTransition(async () => {
               const res = await sendOtp(fd);
+
               if (res?.error) {
                 setMessage(res.error);
                 return;
               }
+
               setStep("verify");
-              setMessage("code sent to your email");
+              setMessage("A sign-in code has been sent to your email.");
             });
           }}
           className="space-y-4"
@@ -36,11 +38,9 @@ export function AuthCard() {
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-600">
               volleyball chicago
             </p>
-            <h1 className="mt-3 text-3xl font-bold text-slate-900">
-              single sign on / sign up
-            </h1>
+            <h1 className="mt-3 text-3xl font-bold text-slate-900">sign in</h1>
             <p className="mt-2 text-sm text-slate-500">
-              Enter your email to receive a one-time code.
+              Enter your email and we’ll send you a one-time sign-in code.
             </p>
           </div>
 
@@ -66,7 +66,7 @@ export function AuthCard() {
             disabled={pending}
             className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
           >
-            {pending ? "sending..." : "send code"}
+            {pending ? "sending code..." : "send code"}
           </button>
 
           {message ? <p className="text-sm text-sky-600">{message}</p> : null}
@@ -94,10 +94,10 @@ export function AuthCard() {
               verify
             </p>
             <h2 className="mt-3 text-2xl font-bold text-slate-900">
-              enter your code
+              enter code
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Check your email and enter the one-time code.
+              Check your email and enter the one-time code below.
             </p>
           </div>
 
@@ -136,7 +136,7 @@ export function AuthCard() {
             disabled={pending}
             className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
           >
-            {pending ? "verifying..." : "verify code"}
+            {pending ? "verifying..." : "continue"}
           </button>
 
           <button

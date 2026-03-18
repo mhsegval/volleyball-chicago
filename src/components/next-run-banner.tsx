@@ -1,6 +1,6 @@
-import { MapPin, Wallet } from "lucide-react";
-import { formatRunWindow } from "@/lib/format";
+import { CalendarDays, MapPin, Wallet } from "lucide-react";
 import type { Run } from "@/lib/types";
+import { formatRunWindow } from "@/lib/format";
 
 export function NextRunBanner({
   run,
@@ -11,60 +11,89 @@ export function NextRunBanner({
 }) {
   if (!run) {
     return (
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-600">
-          next run
-        </p>
-        <h1 className="mt-3 text-2xl font-bold text-slate-900">
-          no active run yet
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          an admin can create the next game from the admin page.
-        </p>
+      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+              upcoming run
+            </p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+              no active run
+            </h1>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+              A new run has not been posted yet. Check back soon.
+            </p>
+          </div>
+
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+            waiting
+          </span>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-600">
-            next run
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+            upcoming run
           </p>
-          <h1 className="mt-3 text-2xl font-bold leading-tight text-slate-900">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
             {run.gym_name}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm leading-6 text-slate-500">
             {formatRunWindow(run.date, run.start_time, run.end_time)}
           </p>
         </div>
 
-        <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-right">
-          <p className="text-xs uppercase tracking-wide text-emerald-700">
-            estimated rent
-          </p>
-          <p className="mt-1 text-xl font-bold text-slate-900">
-            ${estimatedRent?.toFixed(2) ?? "0.00"}
-          </p>
-        </div>
+        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+          live
+        </span>
       </div>
 
-      <a
-        href={run.location_url}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-      >
-        <MapPin className="h-4 w-4 text-sky-600" />
-        open location
-      </a>
+      <div className="mt-5 grid grid-cols-1 gap-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <CalendarDays className="h-4 w-4 text-slate-500" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              schedule
+            </p>
+            <p className="mt-1 text-sm font-medium text-slate-900">
+              {formatRunWindow(run.date, run.start_time, run.end_time)}
+            </p>
+          </div>
+        </div>
 
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-sky-50 px-4 py-3">
-        <Wallet className="h-5 w-5 text-sky-700" />
-        <p className="text-sm text-slate-700">
-          Rent updates dynamically as players join or leave.
-        </p>
+        <a
+          href={run.location_url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300"
+        >
+          <MapPin className="h-4 w-4 text-slate-500" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              location
+            </p>
+            <p className="mt-1 truncate text-sm font-medium text-slate-900">
+              open map
+            </p>
+          </div>
+        </a>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <Wallet className="h-4 w-4 text-slate-500" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              estimated share
+            </p>
+            <p className="mt-1 text-sm font-medium text-slate-900">
+              ${Number(estimatedRent ?? run.total_rent).toFixed(2)} per player
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

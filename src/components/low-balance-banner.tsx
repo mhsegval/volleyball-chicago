@@ -11,23 +11,28 @@ export function LowBalanceBanner({ balance }: { balance: number }) {
 
   return (
     <>
-      <section className="rounded-[28px] border border-amber-200 bg-amber-50 p-5 shadow-sm">
+      <section className="rounded-[32px] border border-amber-200 bg-amber-50 p-5 shadow-sm">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" />
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-slate-900">low balance</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Your balance is ${balance.toFixed(2)}. Add funds to avoid signup
-              issues.
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+              balance
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+              balance is running low
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Your current balance is ${balance.toFixed(2)}. Add funds now to
+              stay ready for the next run.
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setOpen(true)}
-          className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white"
+          className="mt-5 w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white"
         >
-          pay now
+          add funds
         </button>
       </section>
 

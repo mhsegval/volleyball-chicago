@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 
 export function ActionConfirmButton({
   buttonClassName,
-  buttonLabel,
   title,
   description,
   confirmLabel,
@@ -13,12 +12,11 @@ export function ActionConfirmButton({
   children,
 }: {
   buttonClassName: string;
-  buttonLabel?: string;
   title: string;
   description: string;
   confirmLabel: string;
   onConfirm: () => Promise<void> | void;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -30,7 +28,7 @@ export function ActionConfirmButton({
         onClick={() => setOpen(true)}
         className={buttonClassName}
       >
-        {children ?? buttonLabel}
+        {children}
       </button>
 
       <AnimatePresence>
@@ -50,8 +48,15 @@ export function ActionConfirmButton({
               transition={{ type: "spring", stiffness: 220, damping: 24 }}
               className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-[32px] border border-slate-200 bg-white p-5 shadow-2xl"
             >
-              <h3 className="text-xl font-bold text-slate-900">{title}</h3>
-              <p className="mt-2 text-sm text-slate-600">{description}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+                confirm
+              </p>
+              <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {description}
+              </p>
 
               <div className="mt-5 space-y-3">
                 <button

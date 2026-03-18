@@ -54,6 +54,7 @@ export default async function AdminPage() {
       .from("signups")
       .select("*, users(*)")
       .eq("run_id", activeRun.id)
+      .order("status", { ascending: true })
       .order("created_at", { ascending: true });
 
     signups = (data ?? []) as SignupWithUser[];
@@ -85,14 +86,17 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-5 px-4 py-5 pb-32">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-600">
+      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
           admin
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">
-          run management
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+          control center
         </h1>
-      </div>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Manage runs, payments, and players from one place.
+        </p>
+      </section>
 
       <AdminPanel
         activeRun={activeRun}

@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, UserMinus } from "lucide-react";
-import { addSignup, removeSignup } from "@/lib/actions";
+import { Plus, Search } from "lucide-react";
+import { addSignup } from "@/lib/actions";
 import type { UserProfile } from "@/lib/types";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -35,10 +35,14 @@ export function PlayerAutocomplete({
     if (!q) return [];
 
     return users
-      .filter(
-        (u) =>
-          u.name.toLowerCase().includes(q) && !signedUpUserIds.includes(u.id),
-      )
+      .filter((u) => {
+        const name = (u.name || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        return (
+          (name.includes(q) || email.includes(q)) &&
+          !signedUpUserIds.includes(u.id)
+        );
+      })
       .slice(0, 8);
   }, [query, users, signedUpUserIds, isAdmin]);
 
@@ -61,54 +65,28 @@ export function PlayerAutocomplete({
     });
   }
 
-  function handleRemoveSelf() {
-    const formData = new FormData();
-    formData.set("run_id", runId);
-    formData.set("user_id", currentUser.id);
-
-    setError("");
-
-    startTransition(async () => {
-      const result = await removeSignup(formData);
-
-      if (result?.error) {
-        setError(result.error);
-      }
-    });
-  }
-
   if (!isAdmin) {
     return (
       <section className="space-y-3">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <UserAvatar
               name={currentUser.name}
               avatarUrl={currentUser.avatar_url}
-              size={44}
+              size={46}
             />
             <div className="flex-1">
               <p className="font-medium text-slate-900">{currentUser.name}</p>
               <p className="text-sm text-slate-500">
                 {isCurrentUserSignedUp
-                  ? "you are registered for this run"
-                  : "register yourself for this run"}
+                  ? "You are already in for this run."
+                  : "Join the run from your account."}
               </p>
             </div>
           </div>
 
-          <div className="mt-4">
-            {isCurrentUserSignedUp ? (
-              <button
-                type="button"
-                disabled={pending}
-                onClick={handleRemoveSelf}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 font-medium text-red-700 disabled:opacity-60"
-              >
-                <UserMinus className="h-4 w-4" />
-                remove me
-              </button>
-            ) : (
+          {!isCurrentUserSignedUp && (
+            <div className="mt-4">
               <button
                 type="button"
                 disabled={pending}
@@ -116,10 +94,10 @@ export function PlayerAutocomplete({
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
               >
                 <Plus className="h-4 w-4" />
-                register me
+                {pending ? "joining..." : "join run"}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -129,7 +107,7 @@ export function PlayerAutocomplete({
 
   return (
     <section className="relative">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           add player
         </label>
@@ -139,7 +117,7 @@ export function PlayerAutocomplete({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="search by name"
+            placeholder="Search by name or email"
             className="w-full bg-transparent text-slate-900 outline-none"
           />
         </div>
