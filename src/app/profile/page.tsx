@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { Wallet, Flame } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { BottomBar } from "@/components/bottom-bar";
-import { UserAvatar } from "@/components/user-avatar";
-import { ProfileEditForm } from "@/components/profile-edit-form";
-import { ProfilePaymentSection } from "@/components/profile-payment-section";
-import type { UserProfile, PaymentRequest } from "@/lib/types";
+import { ProfilePageClient } from "@/components/profile-page-client";
+import type {
+  UserProfile,
+  PaymentRequest,
+  BalanceHistoryItem,
+  MatchHistoryItem,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -30,89 +31,120 @@ export default async function ProfilePage() {
     redirect("/auth");
   }
 
-  const { data: paymentRequests } = await supabase
-    .from("payment_requests")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
+  const [
+    pendingPaymentsResult,
+    paymentHistoryResult,
+    signedRunsResult,
+    completedRunsResult,
+  ] = await Promise.all([
+    supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase.from("signups").select("run_id").eq("user_id", user.id),
+    supabase
+      .from("runs")
+      .select("*")
+      .eq("status", "completed")
+      .order("date", { ascending: false })
+      .limit(20),
+  ]);
 
   const isLowBalance = Number(profile.balance) <= 10;
   const hasPendingPayment =
-    ((paymentRequests ?? []) as PaymentRequest[]).length > 0;
+    ((pendingPaymentsResult.data ?? []) as PaymentRequest[]).length > 0;
+
+  const paymentHistory: BalanceHistoryItem[] = (
+    (paymentHistoryResult.data ?? []) as PaymentRequest[]
+  ).map((p) => ({
+    id: p.id,
+    kind: "payment",
+    amount: Number(p.amount),
+    status: p.status,
+    method: p.method,
+    created_at: p.created_at,
+    note: "balance top-up",
+  }));
+
+  const completedRuns = (completedRunsResult.data ?? []) as Array<{
+    id: string;
+    date: string;
+    gym_name: string;
+    total_rent: number;
+  }>;
+
+  const signedRunIds = new Set(
+    ((signedRunsResult.data ?? []) as Array<{ run_id: string }>).map(
+      (s) => s.run_id,
+    ),
+  );
+
+  const playerCountsByRun = new Map<string, number>();
+
+  if (completedRuns.length > 0) {
+    const runIds = completedRuns.map((r) => r.id);
+    const { data: completedSignups } = await supabase
+      .from("signups")
+      .select("run_id, status")
+      .in("run_id", runIds)
+      .eq("status", "roster");
+
+    for (const row of (completedSignups ?? []) as Array<{
+      run_id: string;
+      status: string;
+    }>) {
+      playerCountsByRun.set(
+        row.run_id,
+        (playerCountsByRun.get(row.run_id) ?? 0) + 1,
+      );
+    }
+  }
+
+  const runCharges: BalanceHistoryItem[] = completedRuns
+    .filter((run) => signedRunIds.has(run.id))
+    .map((run) => {
+      const playerCount = playerCountsByRun.get(run.id) ?? 0;
+      const share =
+        playerCount > 0
+          ? Number(run.total_rent) / playerCount
+          : Number(run.total_rent);
+
+      return {
+        id: run.id,
+        kind: "run_charge",
+        amount: Number(share.toFixed(2)),
+        created_at: run.date,
+        note: `${run.gym_name} run charge`,
+      };
+    });
+
+  const balanceHistory = [...paymentHistory, ...runCharges].sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  );
+
+  const matchHistory: MatchHistoryItem[] = completedRuns.map((run) => ({
+    run_id: run.id,
+    date: run.date,
+    gym_name: run.gym_name,
+    player_count: playerCountsByRun.get(run.id) ?? 0,
+    did_play: signedRunIds.has(run.id),
+  }));
 
   return (
-    <div className="space-y-5 px-4 py-5 pb-32">
-      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-4">
-          <UserAvatar
-            name={profile.name || "user"}
-            avatarUrl={profile.avatar_url}
-            size={80}
-          />
-
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
-              profile
-            </p>
-            <h1 className="mt-2 truncate text-3xl font-bold tracking-tight text-slate-900">
-              {profile.name || "unnamed user"}
-            </h1>
-            <p className="mt-2 truncate text-sm text-slate-500">
-              {profile.email}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="flex items-center gap-2 text-slate-500">
-              <Wallet className="h-4 w-4" />
-              <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                balance
-              </span>
-            </div>
-            <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
-              ${Number(profile.balance).toFixed(2)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="flex items-center gap-2 text-slate-500">
-              <Flame className="h-4 w-4" />
-              <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                streak
-              </span>
-            </div>
-            <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
-              {profile.streak}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <ProfilePaymentSection
-        lowBalance={isLowBalance}
-        hasPendingPayment={hasPendingPayment}
-      />
-
-      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
-            account
-          </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            edit profile
-          </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Update your name or photo at any time.
-          </p>
-        </div>
-
-        <ProfileEditForm defaultName={profile.name ?? ""} />
-      </section>
-
-      <BottomBar isAdmin={profile.role === "admin"} />
-    </div>
+    <ProfilePageClient
+      profile={profile}
+      isLowBalance={isLowBalance}
+      hasPendingPayment={hasPendingPayment}
+      balanceHistory={balanceHistory}
+      matchHistory={matchHistory}
+    />
   );
 }

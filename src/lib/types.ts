@@ -48,3 +48,21 @@ export type PaymentRequest = {
   reviewed_by: string | null;
   users?: UserProfile;
 };
+
+export type BalanceHistoryItem = {
+  id: string;
+  kind: 'payment' | 'run_charge';
+  amount: number;
+  status?: string | null;
+  method?: string | null;
+  created_at: string;
+  note: string;
+};
+
+export type MatchHistoryItem = {
+  run_id: string;
+  date: string;
+  gym_name: string;
+  player_count: number;
+  did_play: boolean;
+};

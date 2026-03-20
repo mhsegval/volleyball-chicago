@@ -214,7 +214,7 @@ export function Roster({
                     {isCurrentUser && !isAdmin && !allowSelfRemove && (
                       <div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs text-slate-600">
                         <Clock3 className="h-3.5 w-3.5" />
-                        opt-out closes 24 hours before start
+                        opt-out closes 48 hours before start
                       </div>
                     )}
                   </motion.div>
