@@ -65,4 +65,5 @@ export type MatchHistoryItem = {
   gym_name: string;
   player_count: number;
   did_play: boolean;
+  your_share: number | null;
 };

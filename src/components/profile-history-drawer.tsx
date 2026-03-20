@@ -144,8 +144,8 @@ export function ProfileHistoryDrawer({
                         key={item.run_id}
                         className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
                             <p className="font-medium text-slate-900">
                               {item.gym_name}
                             </p>
@@ -153,7 +153,14 @@ export function ProfileHistoryDrawer({
                               {formatDate(item.date)} · {item.player_count}{" "}
                               players
                             </p>
+                            {item.did_play && item.your_share !== null ? (
+                              <p className="mt-2 text-sm font-medium text-slate-700">
+                                your share · $
+                                {Number(item.your_share).toFixed(2)}
+                              </p>
+                            ) : null}
                           </div>
+
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-medium ${
                               item.did_play

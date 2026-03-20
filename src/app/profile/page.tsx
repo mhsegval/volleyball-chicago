@@ -130,13 +130,24 @@ export default async function ProfilePage() {
     b.created_at.localeCompare(a.created_at),
   );
 
-  const matchHistory: MatchHistoryItem[] = completedRuns.map((run) => ({
-    run_id: run.id,
-    date: run.date,
-    gym_name: run.gym_name,
-    player_count: playerCountsByRun.get(run.id) ?? 0,
-    did_play: signedRunIds.has(run.id),
-  }));
+  const matchHistory: MatchHistoryItem[] = completedRuns.map((run) => {
+    const playerCount = playerCountsByRun.get(run.id) ?? 0;
+    const didPlay = signedRunIds.has(run.id);
+
+    const yourShare =
+      didPlay && playerCount > 0
+        ? Number((Number(run.total_rent) / playerCount).toFixed(2))
+        : null;
+
+    return {
+      run_id: run.id,
+      date: run.date,
+      gym_name: run.gym_name,
+      player_count: playerCount,
+      did_play: didPlay,
+      your_share: yourShare,
+    };
+  });
 
   return (
     <ProfilePageClient
