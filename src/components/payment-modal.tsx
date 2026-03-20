@@ -5,8 +5,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Info, X } from "lucide-react";
 import { createPaymentRequest } from "@/lib/actions";
 
-const ZELLE_EMAIL = "aqms53@outlook.com";
-const VENMO_ID = "@AQBadri";
+const ZELLE_EMAIL = "moizkarimi786@gmail.com";
+const VENMO_ID = "@Moiz-Karimi";
+const VENMO_LINK =
+  "https://venmo.com/code?user_id=2354556998516736986&created=1774042883";
 
 export function PaymentModal({
   open,
@@ -162,10 +164,10 @@ export function PaymentModal({
                   <div className="flex items-start gap-3">
                     <Info className="mt-0.5 h-4 w-4 text-sky-700" />
                     <div className="text-sm leading-6 text-sky-800">
-                      <p>Send the amount to the details below.</p>
+                      <p>Send the amount using the details below.</p>
                       <p className="mt-2">
-                        Please put your name in the memo exactly as it appears
-                        in your app profile for easier tracking.
+                        Please put your profile name from the app in the memo
+                        for easier tracking.
                       </p>
                     </div>
                   </div>
@@ -196,7 +198,7 @@ export function PaymentModal({
 
                 {method === "venmo" && (
                   <a
-                    href="https://venmo.com/AQBadri"
+                    href={VENMO_LINK}
                     target="_blank"
                     rel="noreferrer"
                     className="flex w-full items-center justify-center rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white transition active:scale-[0.98]"

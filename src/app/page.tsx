@@ -52,18 +52,23 @@ export default async function HomePage() {
   let estimatedRent: number | null = null;
 
   if (activeRun) {
-    const [{ data: roster }, { data: rentValue }] = await Promise.all([
-      supabase
-        .from("signups")
-        .select("*, users(*)")
-        .eq("run_id", activeRun.id)
-        .order("status", { ascending: true })
-        .order("created_at", { ascending: true }),
-      supabase.rpc("current_estimated_rent", { p_run_id: activeRun.id }),
-    ]);
+    const { data: roster } = await supabase
+      .from("signups")
+      .select("*, users(*)")
+      .eq("run_id", activeRun.id)
+      .order("status", { ascending: true })
+      .order("created_at", { ascending: true });
 
     signups = (roster ?? []) as SignupWithUser[];
-    estimatedRent = Number(rentValue ?? activeRun.total_rent);
+
+    estimatedRent =
+      Number(activeRun.max_players) > 0
+        ? Number(
+            (
+              Number(activeRun.total_rent) / Number(activeRun.max_players)
+            ).toFixed(2),
+          )
+        : Number(activeRun.total_rent);
   }
 
   return (
