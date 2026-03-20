@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Info, X } from "lucide-react";
 import { createPaymentRequest } from "@/lib/actions";
 
-const PAYMENT_EMAIL = "test53@gmail.com";
+const ZELLE_EMAIL = "aqms53@outlook.com";
+const VENMO_ID = "@AQBadri";
 
 export function PaymentModal({
   open,
@@ -21,9 +22,11 @@ export function PaymentModal({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  async function handleCopyEmail() {
+  const paymentTarget = method === "venmo" ? VENMO_ID : ZELLE_EMAIL;
+
+  async function handleCopyValue() {
     try {
-      await navigator.clipboard.writeText(PAYMENT_EMAIL);
+      await navigator.clipboard.writeText(paymentTarget);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {}
@@ -158,23 +161,27 @@ export function PaymentModal({
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
                   <div className="flex items-start gap-3">
                     <Info className="mt-0.5 h-4 w-4 text-sky-700" />
-                    <p className="text-sm leading-6 text-sky-800">
-                      Send the amount to the email below and then tap confirm.
-                    </p>
+                    <div className="text-sm leading-6 text-sky-800">
+                      <p>Send the amount to the details below.</p>
+                      <p className="mt-2">
+                        Please put your name in the memo exactly as it appears
+                        in your app profile for easier tracking.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    payment email
+                    {method === "venmo" ? "venmo id" : "zelle email"}
                   </p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-900">
-                      {PAYMENT_EMAIL}
+                      {paymentTarget}
                     </div>
                     <button
                       type="button"
-                      onClick={handleCopyEmail}
+                      onClick={handleCopyValue}
                       className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-700"
                     >
                       {copied ? (
@@ -189,7 +196,7 @@ export function PaymentModal({
 
                 {method === "venmo" && (
                   <a
-                    href="https://venmo.com/test53"
+                    href="https://venmo.com/AQBadri"
                     target="_blank"
                     rel="noreferrer"
                     className="flex w-full items-center justify-center rounded-2xl bg-sky-600 px-4 py-3 font-semibold text-white transition active:scale-[0.98]"
@@ -204,7 +211,7 @@ export function PaymentModal({
                   onClick={handleConfirmPaid}
                   className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
                 >
-                  {pending ? "confirming payment..." : "I have paid"}
+                  {pending ? "confirming payment..." : "i have paid"}
                 </button>
 
                 <button
