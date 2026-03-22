@@ -142,6 +142,25 @@ export async function rejectPaymentRequest(formData: FormData) {
   return { success: true };
 }
 
+export async function reverseApprovedPaymentRequest(formData: FormData) {
+  const { supabase } = await requireAdmin();
+
+  const requestId = String(formData.get("request_id") || "");
+
+  const { error } = await supabase.rpc("reverse_approved_payment_request", {
+    p_request_id: requestId,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/profile");
+  revalidatePath("/");
+  return { success: true };
+}
+
 async function requireUser() {
   const supabase = await createClient();
   const {

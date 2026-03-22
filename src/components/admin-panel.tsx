@@ -2,6 +2,7 @@ import { completeActiveRun, createRun, updateRunDetails } from "@/lib/actions";
 import { DeleteRunButton } from "@/components/delete-run-button";
 import { RejectPaymentButton } from "@/components/reject-payment-button";
 import { ApprovePaymentButton } from "@/components/approve-payment-button";
+import { ApprovedPaymentsHistoryDrawer } from "@/components/approved-payments-history-drawer";
 import { AdminUserManagement } from "@/components/admin-user-management";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import type { Run, Signup, UserProfile, PaymentRequest } from "@/lib/types";
@@ -12,6 +13,7 @@ type AdminPanelProps = {
   signups: (Signup & { users: UserProfile })[];
   users: UserProfile[];
   pendingPayments: (PaymentRequest & { users?: UserProfile })[];
+  approvedPayments: (PaymentRequest & { users?: UserProfile })[];
 };
 
 function SectionHeader({
@@ -47,6 +49,7 @@ export function AdminPanel({
   activeRun,
   users,
   pendingPayments,
+  approvedPayments,
 }: AdminPanelProps) {
   async function submitCreateRun(formData: FormData) {
     "use server";
@@ -73,13 +76,17 @@ export function AdminPanel({
           description="Review recent balance top-ups and keep account balances accurate."
         />
 
-        <div className="mt-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="text-sm font-medium text-slate-600">
-            Pending reviews
-          </span>
-          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-            {pendingPayments.length}
-          </span>
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-600">
+              Pending reviews
+            </span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+              {pendingPayments.length}
+            </span>
+          </div>
+
+          <ApprovedPaymentsHistoryDrawer payments={approvedPayments} />
         </div>
 
         <div className="mt-4 space-y-3">

@@ -7,7 +7,10 @@ import type { Run, Signup, UserProfile, PaymentRequest } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 type SignupWithUser = Signup & { users: UserProfile };
-type PaymentRequestWithUser = PaymentRequest & { users?: UserProfile };
+type PaymentRequestWithUser = PaymentRequest & {
+  users?: UserProfile;
+  reviewed_by_user?: UserProfile;
+};
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -32,20 +35,26 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const [{ data: activeRun }, usersResult, pendingPaymentsRawResult] =
-    await Promise.all([
-      supabase
-        .from("runs")
-        .select("*")
-        .eq("status", "active")
-        .maybeSingle<Run>(),
-      supabase.from("users").select("*").order("name"),
-      supabase
-        .from("payment_requests")
-        .select("*")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: activeRun },
+    usersResult,
+    pendingPaymentsRawResult,
+    approvedPaymentsRawResult,
+  ] = await Promise.all([
+    supabase.from("runs").select("*").eq("status", "active").maybeSingle<Run>(),
+    supabase.from("users").select("*").order("name"),
+    supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("payment_requests")
+      .select("*")
+      .eq("status", "approved")
+      .order("reviewed_at", { ascending: false })
+      .limit(20),
+  ]);
 
   let signups: SignupWithUser[] = [];
 
@@ -62,25 +71,55 @@ export default async function AdminPage() {
 
   const pendingPaymentsRaw = (pendingPaymentsRawResult.data ??
     []) as PaymentRequest[];
-  const pendingUserIds = [...new Set(pendingPaymentsRaw.map((p) => p.user_id))];
 
-  let pendingUsersMap = new Map<string, UserProfile>();
+  const approvedPaymentsRaw = (approvedPaymentsRawResult.data ??
+    []) as PaymentRequest[];
 
-  if (pendingUserIds.length > 0) {
-    const { data: pendingUsers } = await supabase
+  const paymentUserIds = [
+    ...new Set(
+      [...pendingPaymentsRaw, ...approvedPaymentsRaw].map((p) => p.user_id),
+    ),
+  ];
+
+  const reviewerUserIds = [
+    ...new Set(
+      approvedPaymentsRaw
+        .map((p) => p.reviewed_by)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const allNeededUserIds = [
+    ...new Set([...paymentUserIds, ...reviewerUserIds]),
+  ];
+
+  let paymentUsersMap = new Map<string, UserProfile>();
+
+  if (allNeededUserIds.length > 0) {
+    const { data: paymentUsers } = await supabase
       .from("users")
       .select("*")
-      .in("id", pendingUserIds);
+      .in("id", allNeededUserIds);
 
-    pendingUsersMap = new Map(
-      ((pendingUsers ?? []) as UserProfile[]).map((u) => [u.id, u]),
+    paymentUsersMap = new Map(
+      ((paymentUsers ?? []) as UserProfile[]).map((u) => [u.id, u]),
     );
   }
 
   const pendingPayments: PaymentRequestWithUser[] = pendingPaymentsRaw.map(
     (payment) => ({
       ...payment,
-      users: pendingUsersMap.get(payment.user_id),
+      users: paymentUsersMap.get(payment.user_id),
+    }),
+  );
+
+  const approvedPayments: PaymentRequestWithUser[] = approvedPaymentsRaw.map(
+    (payment) => ({
+      ...payment,
+      users: paymentUsersMap.get(payment.user_id),
+      reviewed_by_user: payment.reviewed_by
+        ? paymentUsersMap.get(payment.reviewed_by)
+        : undefined,
     }),
   );
 
@@ -103,6 +142,7 @@ export default async function AdminPage() {
         signups={signups}
         users={(usersResult.data ?? []) as UserProfile[]}
         pendingPayments={pendingPayments}
+        approvedPayments={approvedPayments}
       />
 
       <BottomBar isAdmin />

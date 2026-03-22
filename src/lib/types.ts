@@ -1,8 +1,8 @@
-export type UserRole = 'user' | 'admin';
-export type RunStatus = 'active' | 'completed';
-export type PaymentMethod = 'zelle' | 'venmo';
-export type PaymentStatus = 'pending' | 'approved' | 'rejected';
-export type SignupStatus = 'roster' | 'waitlist';
+export type UserRole = "user" | "admin";
+export type RunStatus = "active" | "completed";
+export type PaymentMethod = "zelle" | "venmo";
+export type PaymentStatus = "pending" | "approved" | "rejected" | "reversed";
+export type SignupStatus = "roster" | "waitlist";
 
 export type UserProfile = {
   id: string;
@@ -51,7 +51,7 @@ export type PaymentRequest = {
 
 export type BalanceHistoryItem = {
   id: string;
-  kind: 'payment' | 'run_charge';
+  kind: "payment" | "run_charge";
   amount: number;
   status?: string | null;
   method?: string | null;
