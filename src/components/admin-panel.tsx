@@ -1,15 +1,11 @@
-import {
-  approvePaymentRequest,
-  completeActiveRun,
-  createRun,
-  updateRunDetails,
-} from "@/lib/actions";
+import { completeActiveRun, createRun, updateRunDetails } from "@/lib/actions";
 import { DeleteRunButton } from "@/components/delete-run-button";
 import { RejectPaymentButton } from "@/components/reject-payment-button";
+import { ApprovePaymentButton } from "@/components/approve-payment-button";
 import { AdminUserManagement } from "@/components/admin-user-management";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import type { Run, Signup, UserProfile, PaymentRequest } from "@/lib/types";
-import { Check, CreditCard, CalendarDays, Settings2 } from "lucide-react";
+import { CreditCard, CalendarDays, Settings2 } from "lucide-react";
 
 type AdminPanelProps = {
   activeRun: Run | null;
@@ -67,11 +63,6 @@ export function AdminPanel({
     await completeActiveRun();
   }
 
-  async function submitApprovePayment(formData: FormData) {
-    "use server";
-    await approvePaymentRequest(formData);
-  }
-
   return (
     <div className="space-y-6">
       <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -115,15 +106,11 @@ export function AdminPanel({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <form action={submitApprovePayment}>
-                    <input type="hidden" name="request_id" value={payment.id} />
-                    <button
-                      className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-700 transition active:scale-[0.98]"
-                      title="confirm payment"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                  </form>
+                  <ApprovePaymentButton
+                    requestId={payment.id}
+                    amount={Number(payment.amount)}
+                    userName={payment.users?.name}
+                  />
 
                   <RejectPaymentButton
                     requestId={payment.id}
