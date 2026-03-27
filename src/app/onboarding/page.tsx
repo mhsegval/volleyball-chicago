@@ -22,11 +22,7 @@ export default async function OnboardingPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile) {
-    redirect("/");
-  }
-
-  if (profile?.name) {
+  if (profile?.name && profile.name.trim().length > 0) {
     redirect("/");
   }
 

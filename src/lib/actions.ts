@@ -578,10 +578,16 @@ export async function completeProfile(formData: FormData) {
     updatePayload.avatar_url = avatarUrl;
   }
 
-  const { error } = await supabase
-    .from('users')
-    .update(updatePayload)
-    .eq('id', user.id);
+const { error } = await supabase
+  .from('users')
+  .upsert(
+    {
+      id: user.id,
+      email: user.email?.trim().toLowerCase() || "",
+      ...updatePayload,
+    },
+    { onConflict: "id" }
+  );
 
   if (error) {
     return { error: error.message };
@@ -652,10 +658,16 @@ export async function updateOwnProfile(formData: FormData) {
     updatePayload.avatar_url = avatarUrl;
   }
 
-  const { error } = await supabase
-    .from('users')
-    .update(updatePayload)
-    .eq('id', user.id);
+const { error } = await supabase
+  .from('users')
+  .upsert(
+    {
+      id: user.id,
+      email: user.email?.trim().toLowerCase() || "",
+      ...updatePayload,
+    },
+    { onConflict: "id" }
+  );
 
   if (error) {
     return { error: error.message };
