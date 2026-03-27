@@ -31,7 +31,7 @@ export default async function HomePage() {
         .from("users")
         .select("*")
         .eq("id", user.id)
-        .single<UserProfile>(),
+        .maybeSingle<UserProfile>(),
       supabase
         .from("runs")
         .select("*")
@@ -41,7 +41,7 @@ export default async function HomePage() {
     ]);
 
   if (!profile) {
-    redirect("/auth");
+    redirect("/onboarding");
   }
 
   if (isNewUser(profile)) {

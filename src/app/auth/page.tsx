@@ -8,7 +8,7 @@ export default async function AuthPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) redirect("/");
+  if (user) redirect("/onboarding");
 
   return (
     <div className="flex min-h-screen items-center px-4">

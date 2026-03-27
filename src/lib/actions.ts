@@ -510,7 +510,7 @@ export async function verifyOtp(formData: FormData) {
   revalidatePath('/');
   revalidatePath('/onboarding');
   revalidatePath('/profile');
-  redirect('/');
+  redirect("/onboarding");
 }
 
 export async function signOut() {
