@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { ProfileSaveButton } from "@/components/profile-save-button";
 import { OnboardingForm } from "@/components/onboarding-form";
 import { completeProfile } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
@@ -21,7 +20,11 @@ export default async function OnboardingPage() {
     .from("users")
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (!profile) {
+    redirect("/");
+  }
 
   if (profile?.name) {
     redirect("/");
@@ -47,6 +50,7 @@ export default async function OnboardingPage() {
           Add your name now. A profile picture is optional and you can always
           add it later.
         </p>
+
         <OnboardingForm defaultName={profile?.name ?? ""} />
       </div>
     </div>

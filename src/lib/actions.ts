@@ -4,6 +4,102 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
+type LedgerKind =
+  | 'payment_submitted'
+  | 'payment_approved'
+  | 'payment_rejected'
+  | 'payment_reversed'
+  | 'manual_balance_adjustment'
+  | 'run_completed'
+  | 'run_charge';
+
+async function insertLedgerEntry(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    kind: LedgerKind;
+    user_id?: string | null;
+    run_id?: string | null;
+    payment_request_id?: string | null;
+    amount: number;
+    method?: 'zelle' | 'venmo' | null;
+    note?: string | null;
+    actor_user_id?: string | null;
+    metadata?: Record<string, unknown>;
+    created_at?: string;
+  }
+) {
+  const { error } = await supabase.from('ledger_entries').insert({
+    kind: input.kind,
+    user_id: input.user_id ?? null,
+    run_id: input.run_id ?? null,
+    payment_request_id: input.payment_request_id ?? null,
+    amount: Number(input.amount ?? 0),
+    method: input.method ?? null,
+    note: input.note ?? null,
+    actor_user_id: input.actor_user_id ?? null,
+    metadata: input.metadata ?? {},
+    created_at: input.created_at ?? new Date().toISOString(),
+  });
+
+  if (error) {
+    console.error('ledger insert failed', {
+      kind: input.kind,
+      message: error.message,
+    });
+  }
+}
+
+async function ensureProfileAfterVerify(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: {
+    id: string;
+    email?: string | null;
+    user_metadata?: { name?: string | null } | null;
+  }
+) {
+  const email = user.email?.trim().toLowerCase() || '';
+  const metadataName = user.user_metadata?.name?.trim() || '';
+
+  const { data: existingProfile } = await supabase
+    .from('users')
+    .select('id, name, email')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (existingProfile) {
+    const updatePayload: { email?: string; name?: string } = {};
+
+    if (!existingProfile.email && email) {
+      updatePayload.email = email;
+    }
+
+    if ((!existingProfile.name || existingProfile.name.trim().length === 0) && metadataName) {
+      updatePayload.name = metadataName;
+    }
+
+    if (Object.keys(updatePayload).length > 0) {
+      await supabase.from('users').update(updatePayload).eq('id', user.id);
+    }
+
+    return;
+  }
+
+  const insertPayload = {
+    id: user.id,
+    email,
+    name: metadataName,
+  };
+
+  const { error } = await supabase.from('users').insert(insertPayload);
+
+  if (error) {
+    const message = error.message.toLowerCase();
+
+    if (!message.includes('duplicate') && !message.includes('unique')) {
+      throw new Error(error.message);
+    }
+  }
+}
 
 export async function createRunWithState(
   _prevState: { error?: string; success?: string } | undefined,
@@ -32,7 +128,7 @@ export async function updateRunWithState(
 }
 
 export async function createPaymentRequest(formData: FormData) {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const amount = Number(formData.get('amount') || 0);
   const method = String(formData.get('method') || '');
@@ -45,6 +141,8 @@ export async function createPaymentRequest(formData: FormData) {
     return { error: 'invalid payment method' };
   }
 
+  const createdAt = new Date().toISOString();
+
   const { error } = await supabase.rpc('create_payment_request_and_credit', {
     p_amount: amount,
     p_method: method,
@@ -54,9 +152,35 @@ export async function createPaymentRequest(formData: FormData) {
     return { error: error.message };
   }
 
+  const { data: latestRequest } = await supabase
+    .from('payment_requests')
+    .select('id, created_at')
+    .eq('user_id', user.id)
+    .eq('amount', amount)
+    .eq('method', method)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  await insertLedgerEntry(supabase, {
+    kind: 'payment_submitted',
+    user_id: user.id,
+    payment_request_id: latestRequest?.id ?? null,
+    amount,
+    method,
+    actor_user_id: user.id,
+    created_at: latestRequest?.created_at ?? createdAt,
+    note: 'payment request submitted and balance credited through trust-based flow',
+    metadata: {
+      source: 'createPaymentRequest',
+      trust_based_credit: true,
+    },
+  });
+
   revalidatePath('/');
   revalidatePath('/profile');
   revalidatePath('/admin');
+  revalidatePath('/admin/payments');
   return { success: true };
 }
 
@@ -64,12 +188,24 @@ export async function approvePaymentRequest(formData: FormData) {
   const { supabase, user } = await requireAdmin();
 
   const requestId = String(formData.get('request_id') || '');
+  const reviewedAt = new Date().toISOString();
+
+  const { data: request, error: requestError } = await supabase
+    .from('payment_requests')
+    .select('*')
+    .eq('id', requestId)
+    .eq('status', 'pending')
+    .single();
+
+  if (requestError || !request) {
+    return { error: 'payment request not found' };
+  }
 
   const { error } = await supabase
     .from('payment_requests')
     .update({
       status: 'approved',
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: reviewedAt,
       reviewed_by: user.id,
     })
     .eq('id', requestId)
@@ -79,7 +215,22 @@ export async function approvePaymentRequest(formData: FormData) {
     return { error: error.message };
   }
 
+  await insertLedgerEntry(supabase, {
+    kind: 'payment_approved',
+    user_id: request.user_id,
+    payment_request_id: request.id,
+    amount: Number(request.amount),
+    method: request.method,
+    actor_user_id: user.id,
+    created_at: reviewedAt,
+    note: 'payment approved by admin',
+    metadata: {
+      source: 'approvePaymentRequest',
+    },
+  });
+
   revalidatePath('/admin');
+  revalidatePath('/admin/payments');
   revalidatePath('/profile');
   revalidatePath('/');
   return { success: true };
@@ -89,6 +240,7 @@ export async function rejectPaymentRequest(formData: FormData) {
   const { supabase, user } = await requireAdmin();
 
   const requestId = String(formData.get('request_id') || '');
+  const reviewedAt = new Date().toISOString();
 
   const { data: request, error: requestError } = await supabase
     .from('payment_requests')
@@ -126,7 +278,7 @@ export async function rejectPaymentRequest(formData: FormData) {
     .from('payment_requests')
     .update({
       status: 'rejected',
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: reviewedAt,
       reviewed_by: user.id,
     })
     .eq('id', requestId)
@@ -136,18 +288,46 @@ export async function rejectPaymentRequest(formData: FormData) {
     return { error: updateError.message };
   }
 
+  await insertLedgerEntry(supabase, {
+    kind: 'payment_rejected',
+    user_id: request.user_id,
+    payment_request_id: request.id,
+    amount: Number(request.amount),
+    method: request.method,
+    actor_user_id: user.id,
+    created_at: reviewedAt,
+    note: 'payment rejected and credited balance reversed',
+    metadata: {
+      source: 'rejectPaymentRequest',
+      resulting_balance: reversedBalance,
+    },
+  });
+
   revalidatePath('/admin');
+  revalidatePath('/admin/payments');
   revalidatePath('/profile');
   revalidatePath('/');
   return { success: true };
 }
 
 export async function reverseApprovedPaymentRequest(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
-  const requestId = String(formData.get("request_id") || "");
+  const requestId = String(formData.get('request_id') || '');
+  const reversedAt = new Date().toISOString();
 
-  const { error } = await supabase.rpc("reverse_approved_payment_request", {
+  const { data: request, error: requestError } = await supabase
+    .from('payment_requests')
+    .select('*')
+    .eq('id', requestId)
+    .eq('status', 'approved')
+    .single();
+
+  if (requestError || !request) {
+    return { error: 'approved payment request not found' };
+  }
+
+  const { error } = await supabase.rpc('reverse_approved_payment_request', {
     p_request_id: requestId,
   });
 
@@ -155,9 +335,24 @@ export async function reverseApprovedPaymentRequest(formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/admin");
-  revalidatePath("/profile");
-  revalidatePath("/");
+  await insertLedgerEntry(supabase, {
+    kind: 'payment_reversed',
+    user_id: request.user_id,
+    payment_request_id: request.id,
+    amount: Number(request.amount),
+    method: request.method,
+    actor_user_id: user.id,
+    created_at: reversedAt,
+    note: 'approved payment reversed by admin',
+    metadata: {
+      source: 'reverseApprovedPaymentRequest',
+    },
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/payments');
+  revalidatePath('/profile');
+  revalidatePath('/');
   return { success: true };
 }
 
@@ -197,6 +392,12 @@ export async function sendOtp(formData: FormData) {
   const name = String(formData.get('name') || '').trim();
 
   const supabase = await createClient();
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailPattern.test(email)) {
+    return { error: 'please enter a valid email address' };
+  }
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -291,6 +492,24 @@ export async function verifyOtp(formData: FormData) {
     return { error: error.message };
   }
 
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return { error: 'could not complete sign in' };
+  }
+
+  await ensureProfileAfterVerify(supabase, {
+    id: user.id,
+    email: user.email,
+    user_metadata: user.user_metadata as { name?: string | null } | null,
+  });
+
+  revalidatePath('/');
+  revalidatePath('/onboarding');
+  revalidatePath('/profile');
   redirect('/');
 }
 
@@ -322,7 +541,10 @@ export async function completeProfile(formData: FormData) {
 
   if (avatar && avatar.size > 0) {
     if (!allowedTypes.includes(avatar.type)) {
-      return { error: 'please use jpg, png, webp, or iphone photo formats like heic/heif' };
+      return {
+        error:
+          'please use jpg, png, webp, or iphone photo formats like heic/heif',
+      };
     }
 
     const ext = avatar.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -337,7 +559,10 @@ export async function completeProfile(formData: FormData) {
       });
 
     if (uploadError) {
-      return { error: 'could not upload this photo. please try jpg or png if the issue continues' };
+      return {
+        error:
+          'could not upload this photo. please try jpg or png if the issue continues',
+      };
     }
 
     const { data: publicUrlData } = supabase.storage
@@ -390,7 +615,10 @@ export async function updateOwnProfile(formData: FormData) {
 
   if (avatar && avatar.size > 0) {
     if (!allowedTypes.includes(avatar.type)) {
-      return { error: 'please use jpg, png, webp, or iphone photo formats like heic/heif' };
+      return {
+        error:
+          'please use jpg, png, webp, or iphone photo formats like heic/heif',
+      };
     }
 
     const ext = avatar.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -405,7 +633,10 @@ export async function updateOwnProfile(formData: FormData) {
       });
 
     if (uploadError) {
-      return { error: 'could not upload this photo. please try jpg or png if the issue continues' };
+      return {
+        error:
+          'could not upload this photo. please try jpg or png if the issue continues',
+      };
     }
 
     const { data: publicUrlData } = supabase.storage
@@ -527,11 +758,13 @@ export async function createRun(formData: FormData) {
 }
 
 export async function completeActiveRun() {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
+
+  const completedAt = new Date().toISOString();
 
   const { data: run, error: runError } = await supabase
     .from('runs')
-    .select('id')
+    .select('*')
     .eq('status', 'active')
     .maybeSingle();
 
@@ -542,6 +775,27 @@ export async function completeActiveRun() {
   if (!run) {
     return { error: 'no active run found' };
   }
+
+  const { data: rosterSignups, error: signupsError } = await supabase
+    .from('signups')
+    .select('user_id, status')
+    .eq('run_id', run.id)
+    .eq('status', 'roster');
+
+  if (signupsError) {
+    return { error: signupsError.message };
+  }
+
+  const rosterUsers = (rosterSignups ?? []) as Array<{
+    user_id: string;
+    status: string;
+  }>;
+
+  const rosterCount = rosterUsers.length;
+  const share =
+    rosterCount > 0
+      ? Number((Number(run.total_rent) / rosterCount).toFixed(2))
+      : Number(run.total_rent);
 
   const { error } = await supabase
     .from('runs')
@@ -556,16 +810,67 @@ export async function completeActiveRun() {
     p_run_id: run.id,
   });
 
+  await insertLedgerEntry(supabase, {
+    kind: 'run_completed',
+    run_id: run.id,
+    amount: Number(run.total_rent),
+    actor_user_id: user.id,
+    created_at: completedAt,
+    note: `${run.gym_name} run completed`,
+    metadata: {
+      source: 'completeActiveRun',
+      gym_name: run.gym_name,
+      run_date: run.date,
+      total_rent: Number(run.total_rent),
+      roster_count: rosterCount,
+      share_per_player: share,
+    },
+  });
+
+  for (const signup of rosterUsers) {
+    await insertLedgerEntry(supabase, {
+      kind: 'run_charge',
+      user_id: signup.user_id,
+      run_id: run.id,
+      amount: share,
+      actor_user_id: user.id,
+      created_at: completedAt,
+      note: `${run.gym_name} run charge`,
+      metadata: {
+        source: 'completeActiveRun',
+        gym_name: run.gym_name,
+        run_date: run.date,
+        total_rent: Number(run.total_rent),
+        roster_count: rosterCount,
+        share_per_player: share,
+      },
+    });
+  }
+
   revalidatePath('/');
   revalidatePath('/admin');
+  revalidatePath('/admin/payments');
+  revalidatePath('/profile');
   return { success: true };
 }
 
 export async function updateUserBalance(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const userId = String(formData.get('user_id') || '');
   const balance = Number(formData.get('balance') || 0);
+
+  const { data: existingUser, error: existingUserError } = await supabase
+    .from('users')
+    .select('balance')
+    .eq('id', userId)
+    .single();
+
+  if (existingUserError || !existingUser) {
+    return { error: 'user not found' };
+  }
+
+  const previousBalance = Number(existingUser.balance ?? 0);
 
   const { error } = await supabase
     .from('users')
@@ -576,8 +881,25 @@ export async function updateUserBalance(formData: FormData) {
     return { error: error.message };
   }
 
+  const delta = Number((balance - previousBalance).toFixed(2));
+
+  await insertLedgerEntry(supabase, {
+    kind: 'manual_balance_adjustment',
+    user_id: userId,
+    amount: delta,
+    actor_user_id: user.id,
+    note: 'admin manually updated user balance',
+    metadata: {
+      source: 'updateUserBalance',
+      previous_balance: previousBalance,
+      new_balance: balance,
+    },
+  });
+
   revalidatePath('/');
   revalidatePath('/admin');
+  revalidatePath('/admin/payments');
+  revalidatePath('/profile');
   return { success: true };
 }
 

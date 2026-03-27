@@ -9,7 +9,6 @@ export const dynamic = "force-dynamic";
 type SignupWithUser = Signup & { users: UserProfile };
 type PaymentRequestWithUser = PaymentRequest & {
   users?: UserProfile;
-  reviewed_by_user?: UserProfile;
 };
 
 export default async function AdminPage() {
@@ -35,26 +34,20 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const [
-    { data: activeRun },
-    usersResult,
-    pendingPaymentsRawResult,
-    approvedPaymentsRawResult,
-  ] = await Promise.all([
-    supabase.from("runs").select("*").eq("status", "active").maybeSingle<Run>(),
-    supabase.from("users").select("*").order("name"),
-    supabase
-      .from("payment_requests")
-      .select("*")
-      .eq("status", "pending")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("payment_requests")
-      .select("*")
-      .eq("status", "approved")
-      .order("reviewed_at", { ascending: false })
-      .limit(20),
-  ]);
+  const [{ data: activeRun }, usersResult, pendingPaymentsRawResult] =
+    await Promise.all([
+      supabase
+        .from("runs")
+        .select("*")
+        .eq("status", "active")
+        .maybeSingle<Run>(),
+      supabase.from("users").select("*").order("name"),
+      supabase
+        .from("payment_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
 
   let signups: SignupWithUser[] = [];
 
@@ -72,68 +65,36 @@ export default async function AdminPage() {
   const pendingPaymentsRaw = (pendingPaymentsRawResult.data ??
     []) as PaymentRequest[];
 
-  const approvedPaymentsRaw = (approvedPaymentsRawResult.data ??
-    []) as PaymentRequest[];
+  const pendingUserIds = [...new Set(pendingPaymentsRaw.map((p) => p.user_id))];
 
-  const paymentUserIds = [
-    ...new Set(
-      [...pendingPaymentsRaw, ...approvedPaymentsRaw].map((p) => p.user_id),
-    ),
-  ];
+  let pendingUsersMap = new Map<string, UserProfile>();
 
-  const reviewerUserIds = [
-    ...new Set(
-      approvedPaymentsRaw
-        .map((p) => p.reviewed_by)
-        .filter((id): id is string => Boolean(id)),
-    ),
-  ];
-
-  const allNeededUserIds = [
-    ...new Set([...paymentUserIds, ...reviewerUserIds]),
-  ];
-
-  let paymentUsersMap = new Map<string, UserProfile>();
-
-  if (allNeededUserIds.length > 0) {
-    const { data: paymentUsers } = await supabase
+  if (pendingUserIds.length > 0) {
+    const { data: pendingUsers } = await supabase
       .from("users")
       .select("*")
-      .in("id", allNeededUserIds);
+      .in("id", pendingUserIds);
 
-    paymentUsersMap = new Map(
-      ((paymentUsers ?? []) as UserProfile[]).map((u) => [u.id, u]),
+    pendingUsersMap = new Map(
+      ((pendingUsers ?? []) as UserProfile[]).map((u) => [u.id, u]),
     );
   }
 
   const pendingPayments: PaymentRequestWithUser[] = pendingPaymentsRaw.map(
     (payment) => ({
       ...payment,
-      users: paymentUsersMap.get(payment.user_id),
-    }),
-  );
-
-  const approvedPayments: PaymentRequestWithUser[] = approvedPaymentsRaw.map(
-    (payment) => ({
-      ...payment,
-      users: paymentUsersMap.get(payment.user_id),
-      reviewed_by_user: payment.reviewed_by
-        ? paymentUsersMap.get(payment.reviewed_by)
-        : undefined,
+      users: pendingUsersMap.get(payment.user_id),
     }),
   );
 
   return (
-    <div className="space-y-5 px-4 py-5 pb-32">
-      <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="space-y-5 px-4 py-4 pb-32">
+      <section className="rounded-[32px] border border-slate-200 bg-white px-5 py-5 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
           admin
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-          control center
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          Manage runs, payments, and players from one place.
+        <p className="mt-3 text-base leading-7 text-slate-500">
+          Manage runs, players, and admin tools from one place.
         </p>
       </section>
 
@@ -142,7 +103,9 @@ export default async function AdminPage() {
         signups={signups}
         users={(usersResult.data ?? []) as UserProfile[]}
         pendingPayments={pendingPayments}
-        approvedPayments={approvedPayments}
+        approvedPayments={[]}
+        ledgerEntries={[]}
+        totalSystemBalance={0}
       />
 
       <BottomBar isAdmin />
