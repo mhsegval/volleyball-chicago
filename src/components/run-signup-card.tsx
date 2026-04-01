@@ -68,6 +68,8 @@ export function RunSignupCard({
     spotsLeft >= 2;
 
   function submitSignup(guestCount: 0 | 1) {
+    if (!run) return;
+
     const amount = Number(
       (requiredPerSpot * getRequestedSpots(guestCount)).toFixed(2),
     );
