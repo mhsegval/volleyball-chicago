@@ -34,6 +34,7 @@ export type Signup = {
   user_id: string;
   status: SignupStatus;
   waitlist_position: number | null;
+  guest_count: number;
   created_at: string;
 };
 
