@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { addSignup } from "@/lib/actions";
 import type { UserProfile } from "@/lib/types";
 import { UserAvatar } from "@/components/user-avatar";
@@ -19,14 +19,11 @@ export function PlayerAutocomplete({
   runId,
   users,
   signedUpUserIds,
-  currentUser,
   isAdmin,
 }: PlayerAutocompleteProps) {
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
-
-  const isCurrentUserSignedUp = signedUpUserIds.includes(currentUser.id);
 
   const filtered = useMemo(() => {
     if (!isAdmin) return [];
@@ -50,6 +47,7 @@ export function PlayerAutocomplete({
     const formData = new FormData();
     formData.set("run_id", runId);
     formData.set("user_id", userId);
+    formData.set("guest_count", "0");
 
     setError("");
 
@@ -66,43 +64,7 @@ export function PlayerAutocomplete({
   }
 
   if (!isAdmin) {
-    return (
-      <section className="space-y-3">
-        <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <UserAvatar
-              name={currentUser.name}
-              avatarUrl={currentUser.avatar_url}
-              size={46}
-            />
-            <div className="flex-1">
-              <p className="font-medium text-slate-900">{currentUser.name}</p>
-              <p className="text-sm text-slate-500">
-                {isCurrentUserSignedUp
-                  ? "You are already in for this run."
-                  : "Join the run from your account."}
-              </p>
-            </div>
-          </div>
-
-          {!isCurrentUserSignedUp && (
-            <div className="mt-4">
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => handleAdd(currentUser.id)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60"
-              >
-                <Plus className="h-4 w-4" />
-                {pending ? "joining..." : "join run"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      </section>
-    );
+    return null;
   }
 
   return (

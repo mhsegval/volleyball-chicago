@@ -678,15 +678,39 @@ const { error } = await supabase
   redirect('/profile');
 }
 
+
+function roundUpToNearestHalf(value: number) {
+  return Math.ceil(value * 2) / 2;
+}
+
+function getRequiredPerSpot(totalRent: number, maxPlayers: number) {
+  if (!maxPlayers || maxPlayers <= 0) return Number(totalRent);
+  return Number(roundUpToNearestHalf(Number(totalRent) / Number(maxPlayers)).toFixed(2));
+}
+
+function getRequestedSpots(guestCount: number) {
+  return 1 + Math.max(0, guestCount);
+}
+
 export async function addSignup(formData: FormData) {
   const { supabase } = await requireUser();
 
   const runId = String(formData.get('run_id') || '');
   const userId = String(formData.get('user_id') || '');
+  const guestCount = Number(formData.get('guest_count') || 0);
+
+  if (guestCount < 0) {
+    return { error: 'guest count cannot be negative' };
+  }
+
+  if (guestCount > 1) {
+    return { error: 'you can only bring 1 guest right now' };
+  }
 
   const { error } = await supabase.rpc('add_signup_by_user_id', {
     p_run_id: runId,
     p_user_id: userId,
+    p_guest_count: guestCount,
   });
 
   if (error) {
@@ -695,6 +719,7 @@ export async function addSignup(formData: FormData) {
 
   revalidatePath('/');
   revalidatePath('/admin');
+  revalidatePath('/admin/payments');
   return { success: true };
 }
 
@@ -790,7 +815,7 @@ export async function completeActiveRun() {
 
   const { data: rosterSignups, error: signupsError } = await supabase
     .from('signups')
-    .select('user_id, status')
+    .select('user_id, status, guest_count')
     .eq('run_id', run.id)
     .eq('status', 'roster');
 
@@ -801,12 +826,17 @@ export async function completeActiveRun() {
   const rosterUsers = (rosterSignups ?? []) as Array<{
     user_id: string;
     status: string;
+    guest_count: number | null;
   }>;
 
-  const rosterCount = rosterUsers.length;
-  const share =
-    rosterCount > 0
-      ? Number((Number(run.total_rent) / rosterCount).toFixed(2))
+  const rosterSpotCount = rosterUsers.reduce(
+    (sum, signup) => sum + 1 + Number(signup.guest_count ?? 0),
+    0
+  );
+
+  const sharePerSpot =
+    rosterSpotCount > 0
+      ? Number((Number(run.total_rent) / rosterSpotCount).toFixed(2))
       : Number(run.total_rent);
 
   const { error } = await supabase
@@ -834,17 +864,22 @@ export async function completeActiveRun() {
       gym_name: run.gym_name,
       run_date: run.date,
       total_rent: Number(run.total_rent),
-      roster_count: rosterCount,
-      share_per_player: share,
+      roster_count: rosterUsers.length,
+      roster_spot_count: rosterSpotCount,
+      share_per_player: sharePerSpot,
     },
   });
 
   for (const signup of rosterUsers) {
+    const guestCount = Number(signup.guest_count ?? 0);
+    const spotsCharged = 1 + guestCount;
+    const chargeAmount = Number((sharePerSpot * spotsCharged).toFixed(2));
+
     await insertLedgerEntry(supabase, {
       kind: 'run_charge',
       user_id: signup.user_id,
       run_id: run.id,
-      amount: share,
+      amount: chargeAmount,
       actor_user_id: user.id,
       created_at: completedAt,
       note: `${run.gym_name} run charge`,
@@ -853,8 +888,11 @@ export async function completeActiveRun() {
         gym_name: run.gym_name,
         run_date: run.date,
         total_rent: Number(run.total_rent),
-        roster_count: rosterCount,
-        share_per_player: share,
+        roster_count: rosterUsers.length,
+        roster_spot_count: rosterSpotCount,
+        share_per_player: sharePerSpot,
+        guest_count: guestCount,
+        spots_charged: spotsCharged,
       },
     });
   }

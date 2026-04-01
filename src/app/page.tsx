@@ -5,7 +5,6 @@ import { PlayerAutocomplete } from "@/components/player-autocomplete";
 import { RosterClientShell } from "./roster-client-shell";
 import { BottomBar } from "@/components/bottom-bar";
 import { isNewUser } from "@/lib/format";
-import { LowBalanceBanner } from "@/components/low-balance-banner";
 import type { Run, Signup, UserProfile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +48,6 @@ export default async function HomePage() {
   }
 
   let signups: SignupWithUser[] = [];
-  let estimatedRent: number | null = null;
 
   if (activeRun) {
     const { data: roster } = await supabase
@@ -60,29 +58,19 @@ export default async function HomePage() {
       .order("created_at", { ascending: true });
 
     signups = (roster ?? []) as SignupWithUser[];
-
-    estimatedRent =
-      Number(activeRun.max_players) > 0
-        ? Number(
-            (
-              Number(activeRun.total_rent) / Number(activeRun.max_players)
-            ).toFixed(2),
-          )
-        : Number(activeRun.total_rent);
   }
 
   return (
     <div className="space-y-5 px-4 py-5 pb-32">
-      <NextRunBanner run={activeRun} estimatedRent={estimatedRent} />
-      <LowBalanceBanner balance={Number(profile.balance)} />
+      <NextRunBanner run={activeRun} currentUser={profile} signups={signups} />
 
-      {activeRun && (
+      {activeRun && profile.role === "admin" && (
         <PlayerAutocomplete
           runId={activeRun.id}
           users={(users ?? []) as UserProfile[]}
           signedUpUserIds={signups.map((s) => s.user_id)}
           currentUser={profile}
-          isAdmin={profile.role === "admin"}
+          isAdmin
         />
       )}
 
