@@ -795,14 +795,12 @@ export async function createRun(formData: FormData) {
 }
 
 export async function completeActiveRun() {
-  const { supabase, user } = await requireAdmin();
-
-  const completedAt = new Date().toISOString();
+  const { supabase } = await requireAdmin();
 
   const { data: run, error: runError } = await supabase
-    .from('runs')
-    .select('*')
-    .eq('status', 'active')
+    .from("runs")
+    .select("id")
+    .eq("status", "active")
     .maybeSingle();
 
   if (runError) {
@@ -810,97 +808,22 @@ export async function completeActiveRun() {
   }
 
   if (!run) {
-    return { error: 'no active run found' };
+    return { error: "no active run found" };
   }
-
-  const { data: rosterSignups, error: signupsError } = await supabase
-    .from('signups')
-    .select('user_id, status, guest_count')
-    .eq('run_id', run.id)
-    .eq('status', 'roster');
-
-  if (signupsError) {
-    return { error: signupsError.message };
-  }
-
-  const rosterUsers = (rosterSignups ?? []) as Array<{
-    user_id: string;
-    status: string;
-    guest_count: number | null;
-  }>;
-
-  const rosterSpotCount = rosterUsers.reduce(
-    (sum, signup) => sum + 1 + Number(signup.guest_count ?? 0),
-    0
-  );
-
-  const sharePerSpot =
-    rosterSpotCount > 0
-      ? Number((Number(run.total_rent) / rosterSpotCount).toFixed(2))
-      : Number(run.total_rent);
 
   const { error } = await supabase
-    .from('runs')
-    .update({ status: 'completed' })
-    .eq('id', run.id);
+    .from("runs")
+    .update({ status: "completed" })
+    .eq("id", run.id);
 
   if (error) {
     return { error: error.message };
   }
 
-  await supabase.rpc('refresh_streaks_for_run', {
-    p_run_id: run.id,
-  });
-
-  await insertLedgerEntry(supabase, {
-    kind: 'run_completed',
-    run_id: run.id,
-    amount: Number(run.total_rent),
-    actor_user_id: user.id,
-    created_at: completedAt,
-    note: `${run.gym_name} run completed`,
-    metadata: {
-      source: 'completeActiveRun',
-      gym_name: run.gym_name,
-      run_date: run.date,
-      total_rent: Number(run.total_rent),
-      roster_count: rosterUsers.length,
-      roster_spot_count: rosterSpotCount,
-      share_per_player: sharePerSpot,
-    },
-  });
-
-  for (const signup of rosterUsers) {
-    const guestCount = Number(signup.guest_count ?? 0);
-    const spotsCharged = 1 + guestCount;
-    const chargeAmount = Number((sharePerSpot * spotsCharged).toFixed(2));
-
-    await insertLedgerEntry(supabase, {
-      kind: 'run_charge',
-      user_id: signup.user_id,
-      run_id: run.id,
-      amount: chargeAmount,
-      actor_user_id: user.id,
-      created_at: completedAt,
-      note: `${run.gym_name} run charge`,
-      metadata: {
-        source: 'completeActiveRun',
-        gym_name: run.gym_name,
-        run_date: run.date,
-        total_rent: Number(run.total_rent),
-        roster_count: rosterUsers.length,
-        roster_spot_count: rosterSpotCount,
-        share_per_player: sharePerSpot,
-        guest_count: guestCount,
-        spots_charged: spotsCharged,
-      },
-    });
-  }
-
-  revalidatePath('/');
-  revalidatePath('/admin');
-  revalidatePath('/admin/payments');
-  revalidatePath('/profile');
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/payments");
+  revalidatePath("/profile");
   return { success: true };
 }
 

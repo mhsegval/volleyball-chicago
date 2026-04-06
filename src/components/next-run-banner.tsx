@@ -1,32 +1,23 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   CalendarDays,
   MapPin,
   Wallet,
   UserPlus,
   CircleAlert,
+  Sparkles,
 } from "lucide-react";
 import { PaymentModal } from "@/components/payment-modal";
 import { addSignup } from "@/lib/actions";
 import type { Run, Signup, UserProfile } from "@/lib/types";
 import { formatRunWindow } from "@/lib/format";
-
-function roundUpToNearestHalf(value: number) {
-  return Math.ceil(value * 2) / 2;
-}
-
-function getRequiredPerSpot(totalRent: number, maxPlayers: number) {
-  if (!maxPlayers || maxPlayers <= 0) return Number(totalRent);
-  return Number(
-    roundUpToNearestHalf(Number(totalRent) / Number(maxPlayers)).toFixed(2),
-  );
-}
-
-function getRequestedSpots(guestCount: number) {
-  return 1 + Math.max(0, guestCount);
-}
+import {
+  getPerSpotAmount,
+  getRequestedSpots,
+  getSuggestedTopUpAmount,
+} from "@/lib/payment";
 
 function getRosterSpotCount(signups: (Signup & { users: UserProfile })[]) {
   return signups
@@ -77,7 +68,11 @@ export function NextRunBanner({
     ? safeSignups.find((s) => s.user_id === currentUser.id)
     : undefined;
 
-  const requiredPerSpot = getRequiredPerSpot(
+  const currentBalance = Number(currentUser?.balance ?? 0);
+  const selectedGuestCount: 0 | 1 = mode;
+  const requestedSpots = getRequestedSpots(selectedGuestCount);
+
+  const requiredPerSpot = getPerSpotAmount(
     Number(activeRun.total_rent),
     Number(activeRun.max_players),
   );
@@ -88,10 +83,7 @@ export function NextRunBanner({
     Number(activeRun.max_players) - rosterSpotCount,
   );
 
-  const requestedSpots = getRequestedSpots(mode);
   const requiredBalance = Number((requiredPerSpot * requestedSpots).toFixed(2));
-  const currentBalance = Number(currentUser?.balance ?? 0);
-
   const hasEnoughBalance = currentBalance >= requiredBalance;
   const hasEnoughSpots = spotsLeft >= requestedSpots;
 
@@ -99,6 +91,26 @@ export function NextRunBanner({
   const canJoinWithGuest =
     currentBalance >= Number((requiredPerSpot * 2).toFixed(2)) &&
     spotsLeft >= 2;
+
+  const suggestedTopUp = useMemo(() => {
+    if (!currentUser) return undefined;
+
+    return getSuggestedTopUpAmount({
+      totalRent: Number(activeRun.total_rent),
+      maxPlayers: Number(activeRun.max_players),
+      guestCount: selectedGuestCount,
+      currentBalance,
+    });
+  }, [
+    activeRun.total_rent,
+    activeRun.max_players,
+    currentUser,
+    currentBalance,
+    selectedGuestCount,
+  ]);
+
+  const paymentProfileName =
+    currentUser?.name?.trim() || currentUser?.email || "your profile name";
 
   function submitSignup(guestCount: 0 | 1) {
     if (!currentUser) return;
@@ -270,24 +282,40 @@ export function NextRunBanner({
             </div>
 
             {!hasEnoughBalance ? (
-              <div className="mt-4 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4">
-                <div className="flex items-start gap-3">
-                  <CircleAlert className="mt-0.5 h-4 w-4 text-amber-700" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-amber-900">
-                      not enough balance
-                    </p>
-                    <p className="mt-1 text-sm text-amber-800">
-                      You need ${requiredBalance.toFixed(2)} to continue.
-                    </p>
+              <div className="mt-4 overflow-hidden rounded-[28px] border border-amber-200 bg-gradient-to-br from-amber-50 to-white">
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-2xl bg-amber-100 p-2 text-amber-700">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setPaymentOpen(true)}
-                      className="mt-3 inline-flex rounded-full border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-800"
-                    >
-                      pay now
-                    </button>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-900">
+                        add funds before joining
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        You need{" "}
+                        <span className="font-semibold text-slate-900">
+                          ${requiredBalance.toFixed(2)}
+                        </span>{" "}
+                        for this option. The app will suggest the right amount
+                        for your run and current balance.
+                      </p>
+
+                      {suggestedTopUp ? (
+                        <div className="mt-3 inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-semibold text-amber-800">
+                          suggested top-up ${suggestedTopUp.toFixed(2)}
+                        </div>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentOpen(true)}
+                        className="mt-4 inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
+                      >
+                        add funds
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -354,7 +382,14 @@ export function NextRunBanner({
         )}
       </section>
 
-      <PaymentModal open={paymentOpen} onClose={() => setPaymentOpen(false)} />
+      {currentUser && (
+        <PaymentModal
+          open={paymentOpen}
+          onClose={() => setPaymentOpen(false)}
+          profileName={paymentProfileName}
+          suggestedAmount={suggestedTopUp}
+        />
+      )}
     </>
   );
 }

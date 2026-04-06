@@ -6,9 +6,11 @@ import { PaymentModal } from "@/components/payment-modal";
 export function ProfilePaymentSection({
   lowBalance,
   hasPendingPayment,
+  profileName,
 }: {
   lowBalance: boolean;
   hasPendingPayment: boolean;
+  profileName: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -57,8 +59,9 @@ export function ProfilePaymentSection({
         {!hasPendingPayment && (
           <div className="mt-5">
             <button
+              type="button"
               onClick={() => setOpen(true)}
-              className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white"
+              className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition active:scale-[0.98]"
             >
               add funds
             </button>
@@ -66,7 +69,11 @@ export function ProfilePaymentSection({
         )}
       </section>
 
-      <PaymentModal open={open} onClose={() => setOpen(false)} />
+      <PaymentModal
+        open={open}
+        onClose={() => setOpen(false)}
+        profileName={profileName}
+      />
     </>
   );
 }

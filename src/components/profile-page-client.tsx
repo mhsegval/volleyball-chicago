@@ -30,6 +30,9 @@ export function ProfilePageClient({
     null,
   );
 
+  const paymentProfileName =
+    profile.name?.trim() || profile.email || "your profile name";
+
   return (
     <div className="space-y-5 px-4 py-5 pb-32">
       <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -115,6 +118,7 @@ export function ProfilePageClient({
       <ProfilePaymentSection
         lowBalance={isLowBalance}
         hasPendingPayment={hasPendingPayment}
+        profileName={paymentProfileName}
       />
 
       <ProfileHistoryDrawer
